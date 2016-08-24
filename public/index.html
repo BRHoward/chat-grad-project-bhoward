@@ -30,7 +30,7 @@
                 Conversation {{conversation._id}}
                 <ul>
                     <li ng-repeat="message in conversation.messages">
-                        {{getUserFromId(message.userId).name}} - {{message.text}} ({{message.timestamp | date:"dd/MM/yyyy 'at' h:mma"}})
+                        {{getUserFromId(message.userid).name}} - {{message.text}} ({{message.timestamp | date:"dd/MM/yyyy 'at' h:mma"}})
                     </li>
                 </ul>
                 <form ng-submit="sendMessage(conversation._id)">

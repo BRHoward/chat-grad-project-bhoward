@@ -12,11 +12,10 @@ module.exports = function (port, db, githubAuthoriser) {
     app.use(bodyParser.json());
 
     var users = db.collection("users");
+    var conversations = db.collection("conversations");
     var sessions = {};
 
     var latestGuestID = 0;
-
-    var conversations = [];
 
     function conversation(users) {
         this._id = uuid.v4();
@@ -25,7 +24,7 @@ module.exports = function (port, db, githubAuthoriser) {
     }
 
     function message(userId, messageText) {
-        this.userId = userId;
+        this.userid = userId;
         this.timestamp = Date.now();
         this.text = messageText;
     }
@@ -85,6 +84,7 @@ module.exports = function (port, db, githubAuthoriser) {
         res.sendStatus(201);
     });
 
+    //all requests defined below this middleware require a correct cookie
     app.use(function (req, res, next) {
         if (req.cookies.sessionToken) {
             req.session = sessions[req.cookies.sessionToken];
@@ -96,6 +96,27 @@ module.exports = function (port, db, githubAuthoriser) {
         } else {
             res.sendStatus(401);
         }
+    });
+
+    app.post("/api/newConversation", function (req, res) {
+        var userIds = req.body.userIds;
+        //find all the users in the database that should be part of the new conversation
+        users.find({
+            _id: {
+                $in: userIds
+            }
+        }).toArray(function (err, foundUsers) {
+            if (!err) {
+                var foundUsersIds = foundUsers.map(function (foundUser) {
+                    return foundUser._id;
+                });
+                var newConvo = new conversation(foundUsersIds);
+                conversations.insertOne(newConvo);
+                res.sendStatus(201);
+            } else {
+                res.sendStatus(500);
+            }
+        });
     });
 
     app.get("/api/user", function (req, res) {
@@ -133,37 +154,16 @@ module.exports = function (port, db, githubAuthoriser) {
         }, function (err, user) {
             if (!err) {
                 requestingUser = user;
-                var relevantConversations = conversations.filter(function (conversation) {
-                    return _.contains(conversation.userids, requestingUser._id);
+                conversations.find({
+                    userids: requestingUser._id
+                }).toArray(function (err, relevantConversations) {
+                    res.json(relevantConversations);
                 });
-                res.json(relevantConversations);
             } else {
                 res.sendStatus(500);
             }
         });
 
-    });
-
-    app.post("/api/newConversation", function (req, res) {
-        var userIds = req.body.userIds;
-        //find all the users in the database that should be part of the new conversation
-        users.find({
-            _id: {
-                $in: userIds
-            }
-        }).toArray(function (err, foundUsers) {
-            if (!err) {
-                //TODO : store conversations in a database instead of on the server
-                var foundUsersIds = foundUsers.map(function (foundUser) {
-                    return foundUser._id;
-                });
-                var newConvo = new conversation(foundUsersIds);
-                conversations.push(newConvo);
-                res.sendStatus(201);
-            } else {
-                res.sendStatus(500);
-            }
-        });
     });
 
     app.post("/api/newMessage", function (req, res) {
@@ -171,12 +171,14 @@ module.exports = function (port, db, githubAuthoriser) {
             _id: req.session.user
         }, function (err, user) {
             if (!err) {
-                var conv = _.find(conversations, function (conversation) {
-                    return conversation._id === req.body.conversationId;
-                });
-                //TODO: error checking for if the conversation is not found
                 var newMessage = new message(user._id, req.body.messageText);
-                conv.messages.push(newMessage);
+                conversations.findOneAndUpdate({
+                    _id: req.body.conversationId
+                }, {
+                    $push: {
+                        messages: newMessage
+                    }
+                });
                 res.sendStatus(201);
             } else {
                 res.sendStatus(500);
