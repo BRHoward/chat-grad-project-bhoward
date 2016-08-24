@@ -5,6 +5,7 @@
         <title>Chat</title>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.1/angular.min.js"></script>
         <script src="js/main.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
         <link href="css/main.css" rel="stylesheet" type="text/css">
     </head>
     <body ng-controller="ChatController">
@@ -29,9 +30,13 @@
                 Conversation {{conversation._id}}
                 <ul>
                     <li ng-repeat="message in conversation.messages">
-                        {{message.text}} - {{message.timestamp}}
+                        {{getUserFromId(message.userId).name}} - {{message.text}} ({{message.timestamp | date:"dd/MM/yyyy 'at' h:mma"}})
                     </li>
                 </ul>
+                <form ng-submit="sendMessage(conversation._id)">
+                    <input type="text" ng-model="newMessageValues[conversation._id]" placeholder = "Write message here"></input>
+                    <input type="submit" value="Send"></input>
+                </form>
             </div>
         </section>
     </body>

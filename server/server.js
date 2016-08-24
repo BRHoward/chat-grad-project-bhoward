@@ -69,16 +69,13 @@ module.exports = function (port, db, githubAuthoriser) {
         var guestID = uuid.v4();
         var guestName = req.body.name;
         latestGuestID++;
-        //TODO: maybe generate a unique id for each user
-        users.update({
-            _id: guestID
-        }, {
+
+        users.insertOne({
             _id: guestID,
             name: guestName,
             avatarUrl: "http://s.mtgprice.com/images/unknown.png"
-        }, {
-            upsert: true
         });
+
         var token = guestID;
         sessions[token] = {
             user: guestID
@@ -131,7 +128,6 @@ module.exports = function (port, db, githubAuthoriser) {
 
     app.get("/api/conversations", function (req, res) {
         var requestingUser = {};
-        console.log(req.session);
         users.findOne({
             _id: req.session.user
         }, function (err, user) {
@@ -157,12 +153,30 @@ module.exports = function (port, db, githubAuthoriser) {
             }
         }).toArray(function (err, foundUsers) {
             if (!err) {
+                //TODO : store conversations in a database instead of on the server
                 var foundUsersIds = foundUsers.map(function (foundUser) {
                     return foundUser._id;
                 });
                 var newConvo = new conversation(foundUsersIds);
                 conversations.push(newConvo);
-                //console.log(conversations);
+                res.sendStatus(201);
+            } else {
+                res.sendStatus(500);
+            }
+        });
+    });
+
+    app.post("/api/newMessage", function (req, res) {
+        users.findOne({
+            _id: req.session.user
+        }, function (err, user) {
+            if (!err) {
+                var conv = _.find(conversations, function (conversation) {
+                    return conversation._id === req.body.conversationId;
+                });
+                //TODO: error checking for if the conversation is not found
+                var newMessage = new message(user._id, req.body.messageText);
+                conv.messages.push(newMessage);
                 res.sendStatus(201);
             } else {
                 res.sendStatus(500);

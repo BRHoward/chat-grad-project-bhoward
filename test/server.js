@@ -302,9 +302,9 @@ describe("server", function () {
                 }
             }, function (error, response) {
                 //the id of the guest is a valid UUID
-                assert.match(dbCollections.users.update.getCall(0).args[1]._id,
+                assert.match(dbCollections.users.insertOne.getCall(0).args[0]._id,
                     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-                assert.equal(dbCollections.users.update.getCall(0).args[1].name, "New Guest");
+                assert.equal(dbCollections.users.insertOne.getCall(0).args[0].name, "New Guest");
                 done();
             });
         });
@@ -320,4 +320,9 @@ describe("server", function () {
             });
         });
     });
+    // describe("POST /api/newConversation", function () {
+    //     it("updates the new conversation with relevant data", function (done) {
+
+    //     });
+    // });
 });

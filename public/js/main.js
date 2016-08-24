@@ -1,4 +1,4 @@
-/*global console*/
+/*global console, _*/
 
 (function () {
     var app = angular.module("ChatApp", []);
@@ -11,6 +11,11 @@
         $scope.loadUserInfo = loadUserInfo;
         $scope.startConversation = startConversation;
         $scope.getConversations = getConversations;
+
+        $scope.sendMessage = sendMessage;
+        $scope.newMessageValues = {};
+
+        $scope.getUserFromId = getUserFromId;
 
         $scope.myUserData = {};
         $scope.registeredUsers = [];
@@ -25,7 +30,6 @@
                     $http.get("/api/users")
                         .then(function (result) {
                             $scope.registeredUsers = result.data;
-                            console.log($scope.registeredUsers);
                         });
                 });
         }
@@ -65,10 +69,33 @@
 
         function getConversations() {
             $http.get("/api/conversations").then(function (result) {
+                //TODO: instead of replacing all the conversations each request
+                //      just find the differences and update the local list
                 $scope.myConversations = result.data;
-                console.log($scope.myConversations);
             });
         }
+
+        function sendMessage(conversationId) {
+            $http({
+                    method: "POST",
+                    url: "/api/newMessage",
+                    data: {
+                        conversationId: conversationId,
+                        messageText: $scope.newMessageValues[conversationId]
+                    }
+                })
+                .then(function (response) {
+                    $scope.newMessageValues[conversationId] = "";
+                    $scope.getConversations();
+                });
+        }
+
+        function getUserFromId(id) {
+            return _.find($scope.registeredUsers, function (registeredUser) {
+                return registeredUser._id === id;
+            });
+        }
+
         angular.element(document).ready(function () {
             $scope.loadUserInfo();
             $scope.getConversations();
@@ -76,7 +103,7 @@
             setInterval(function () {
                 loadUserInfo();
                 getConversations();
-            }, 5000);
+            }, 10000);
         });
     });
 })();
