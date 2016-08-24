@@ -25,19 +25,20 @@ var testGithubUser = {
 var testToken = "123123";
 var testExpiredToken = "987978";
 
-describe("server", function() {
+describe("server", function () {
     var cookieJar;
     var db;
     var githubAuthoriser;
     var serverInstance;
     var dbCollections;
-    beforeEach(function() {
+    beforeEach(function () {
         cookieJar = request.jar();
         dbCollections = {
             users: {
                 find: sinon.stub(),
                 findOne: sinon.stub(),
-                insertOne: sinon.spy()
+                insertOne: sinon.spy(),
+                update: sinon.spy()
             }
         };
         db = {
@@ -46,75 +47,79 @@ describe("server", function() {
         db.collection.withArgs("users").returns(dbCollections.users);
 
         githubAuthoriser = {
-            authorise: function() {},
+            authorise: function () {},
             oAuthUri: "https://github.com/login/oauth/authorize?client_id=" + oauthClientId
         };
         serverInstance = server(testPort, db, githubAuthoriser);
     });
-    afterEach(function() {
+    afterEach(function () {
         serverInstance.close();
     });
+
     function authenticateUser(user, token, callback) {
-        sinon.stub(githubAuthoriser, "authorise", function(req, authCallback) {
+        sinon.stub(githubAuthoriser, "authorise", function (req, authCallback) {
             authCallback(user, token);
         });
 
         dbCollections.users.findOne.callsArgWith(1, null, user);
 
-        request(baseUrl + "/oauth", function(error, response) {
+        request(baseUrl + "/oauth", function (error, response) {
             cookieJar.setCookie(request.cookie("sessionToken=" + token), baseUrl);
             callback();
         });
     }
-    describe("GET /oauth", function() {
+    describe("GET /oauth", function () {
         var requestUrl = baseUrl + "/oauth";
 
-        it("responds with status code 400 if oAuth authorise fails", function(done) {
-            var stub = sinon.stub(githubAuthoriser, "authorise", function(req, callback) {
+        it("responds with status code 400 if oAuth authorise fails", function (done) {
+            var stub = sinon.stub(githubAuthoriser, "authorise", function (req, callback) {
                 callback(null);
             });
 
-            request(requestUrl, function(error, response) {
+            request(requestUrl, function (error, response) {
                 assert.equal(response.statusCode, 400);
                 done();
             });
         });
-        it("responds with status code 302 if oAuth authorise succeeds", function(done) {
+        it("responds with status code 302 if oAuth authorise succeeds", function (done) {
             var user = testGithubUser;
-            var stub = sinon.stub(githubAuthoriser, "authorise", function(req, authCallback) {
+            var stub = sinon.stub(githubAuthoriser, "authorise", function (req, authCallback) {
                 authCallback(user, testToken);
             });
 
             dbCollections.users.findOne.callsArgWith(1, null, user);
 
-            request({url: requestUrl, followRedirect: false}, function(error, response) {
+            request({
+                url: requestUrl,
+                followRedirect: false
+            }, function (error, response) {
                 assert.equal(response.statusCode, 302);
                 done();
             });
         });
-        it("responds with a redirect to '/' if oAuth authorise succeeds", function(done) {
+        it("responds with a redirect to '/' if oAuth authorise succeeds", function (done) {
             var user = testGithubUser;
-            var stub = sinon.stub(githubAuthoriser, "authorise", function(req, authCallback) {
+            var stub = sinon.stub(githubAuthoriser, "authorise", function (req, authCallback) {
                 authCallback(user, testToken);
             });
 
             dbCollections.users.findOne.callsArgWith(1, null, user);
 
-            request(requestUrl, function(error, response) {
+            request(requestUrl, function (error, response) {
                 assert.equal(response.statusCode, 200);
                 assert.equal(response.request.uri.path, "/");
                 done();
             });
         });
-        it("add user to database if oAuth authorise succeeds and user id not found", function(done) {
+        it("add user to database if oAuth authorise succeeds and user id not found", function (done) {
             var user = testGithubUser;
-            var stub = sinon.stub(githubAuthoriser, "authorise", function(req, authCallback) {
+            var stub = sinon.stub(githubAuthoriser, "authorise", function (req, authCallback) {
                 authCallback(user, testToken);
             });
 
             dbCollections.users.findOne.callsArgWith(1, null, null);
 
-            request(requestUrl, function(error, response) {
+            request(requestUrl, function (error, response) {
                 assert(dbCollections.users.insertOne.calledOnce);
                 assert.deepEqual(dbCollections.users.insertOne.firstCall.args[0], {
                     _id: "bob",
@@ -125,22 +130,22 @@ describe("server", function() {
             });
         });
     });
-    describe("GET /api/oauth/uri", function() {
+    describe("GET /api/oauth/uri", function () {
         var requestUrl = baseUrl + "/api/oauth/uri";
-        it("responds with status code 200", function(done) {
-            request(requestUrl, function(error, response) {
+        it("responds with status code 200", function (done) {
+            request(requestUrl, function (error, response) {
                 assert.equal(response.statusCode, 200);
                 done();
             });
         });
-        it("responds with a body encoded as JSON in UTF-8", function(done) {
-            request(requestUrl, function(error, response) {
+        it("responds with a body encoded as JSON in UTF-8", function (done) {
+            request(requestUrl, function (error, response) {
                 assert.equal(response.headers["content-type"], "application/json; charset=utf-8");
                 done();
             });
         });
-        it("responds with a body that is a JSON object containing a URI to GitHub with a client id", function(done) {
-            request(requestUrl, function(error, response, body) {
+        it("responds with a body that is a JSON object containing a URI to GitHub with a client id", function (done) {
+            request(requestUrl, function (error, response, body) {
                 assert.deepEqual(JSON.parse(body), {
                     uri: "https://github.com/login/oauth/authorize?client_id=" + oauthClientId
                 });
@@ -148,32 +153,41 @@ describe("server", function() {
             });
         });
     });
-    describe("GET /api/user", function() {
+    describe("GET /api/user", function () {
         var requestUrl = baseUrl + "/api/user";
-        it("responds with status code 401 if user not authenticated", function(done) {
-            request(requestUrl, function(error, response) {
+        it("responds with status code 401 if user not authenticated", function (done) {
+            request(requestUrl, function (error, response) {
                 assert.equal(response.statusCode, 401);
                 done();
             });
         });
-        it("responds with status code 401 if user has an unrecognised session token", function(done) {
+        it("responds with status code 401 if user has an unrecognised session token", function (done) {
             cookieJar.setCookie(request.cookie("sessionToken=" + testExpiredToken), baseUrl);
-            request({url: requestUrl, jar: cookieJar}, function(error, response) {
+            request({
+                url: requestUrl,
+                jar: cookieJar
+            }, function (error, response) {
                 assert.equal(response.statusCode, 401);
                 done();
             });
         });
-        it("responds with status code 200 if user is authenticated", function(done) {
-            authenticateUser(testUser, testToken, function() {
-                request({url: requestUrl, jar: cookieJar}, function(error, response) {
+        it("responds with status code 200 if user is authenticated", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                request({
+                    url: requestUrl,
+                    jar: cookieJar
+                }, function (error, response) {
                     assert.equal(response.statusCode, 200);
                     done();
                 });
             });
         });
-        it("responds with a body that is a JSON representation of the user if user is authenticated", function(done) {
-            authenticateUser(testUser, testToken, function() {
-                request({url: requestUrl, jar: cookieJar}, function(error, response, body) {
+        it("responds with a body that is a JSON representation of the user if user is authenticated", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                request({
+                    url: requestUrl,
+                    jar: cookieJar
+                }, function (error, response, body) {
                     assert.deepEqual(JSON.parse(body), {
                         _id: "bob",
                         name: "Bob Bilson",
@@ -183,82 +197,126 @@ describe("server", function() {
                 });
             });
         });
-        it("responds with status code 500 if database error", function(done) {
-            authenticateUser(testUser, testToken, function() {
+        it("responds with status code 500 if database error", function (done) {
+            authenticateUser(testUser, testToken, function () {
 
-                dbCollections.users.findOne.callsArgWith(1, {err: "Database error"}, null);
+                dbCollections.users.findOne.callsArgWith(1, {
+                    err: "Database error"
+                }, null);
 
-                request({url: requestUrl, jar: cookieJar}, function(error, response) {
+                request({
+                    url: requestUrl,
+                    jar: cookieJar
+                }, function (error, response) {
                     assert.equal(response.statusCode, 500);
                     done();
                 });
             });
         });
     });
-    describe("GET /api/users", function() {
+    describe("GET /api/users", function () {
         var requestUrl = baseUrl + "/api/users";
         var allUsers;
-        beforeEach(function() {
+        beforeEach(function () {
             allUsers = {
                 toArray: sinon.stub()
             };
             dbCollections.users.find.returns(allUsers);
         });
-        it("responds with status code 401 if user not authenticated", function(done) {
-            request(requestUrl, function(error, response) {
+        it("responds with status code 401 if user not authenticated", function (done) {
+            request(requestUrl, function (error, response) {
                 assert.equal(response.statusCode, 401);
                 done();
             });
         });
-        it("responds with status code 401 if user has an unrecognised session token", function(done) {
+        it("responds with status code 401 if user has an unrecognised session token", function (done) {
             cookieJar.setCookie(request.cookie("sessionToken=" + testExpiredToken), baseUrl);
-            request({url: requestUrl, jar: cookieJar}, function(error, response) {
+            request({
+                url: requestUrl,
+                jar: cookieJar
+            }, function (error, response) {
                 assert.equal(response.statusCode, 401);
                 done();
             });
         });
-        it("responds with status code 200 if user is authenticated", function(done) {
-            authenticateUser(testUser, testToken, function() {
+        it("responds with status code 200 if user is authenticated", function (done) {
+            authenticateUser(testUser, testToken, function () {
                 allUsers.toArray.callsArgWith(0, null, [testUser]);
 
-                request({url: requestUrl, jar: cookieJar}, function(error, response) {
+                request({
+                    url: requestUrl,
+                    jar: cookieJar
+                }, function (error, response) {
                     assert.equal(response.statusCode, 200);
                     done();
                 });
             });
         });
-        it("responds with a body that is a JSON representation of the user if user is authenticated", function(done) {
-            authenticateUser(testUser, testToken, function() {
+        it("responds with a body that is a JSON representation of the user if user is authenticated", function (done) {
+            authenticateUser(testUser, testToken, function () {
                 allUsers.toArray.callsArgWith(0, null, [
-                        testUser,
-                        testUser2
-                    ]);
+                    testUser,
+                    testUser2
+                ]);
 
-                request({url: requestUrl, jar: cookieJar}, function(error, response, body) {
-                    assert.deepEqual(JSON.parse(body), [
-                        {
-                            id: "bob",
-                            name: "Bob Bilson",
-                            avatarUrl: "http://avatar.url.com/u=test"
-                        },
-                        {
-                            id: "charlie",
-                            name: "Charlie Colinson",
-                            avatarUrl: "http://avatar.url.com/u=charlie_colinson"
-                        }
-                    ]);
+                request({
+                    url: requestUrl,
+                    jar: cookieJar
+                }, function (error, response, body) {
+                    assert.deepEqual(JSON.parse(body), [{
+                        _id: "bob",
+                        name: "Bob Bilson",
+                        avatarUrl: "http://avatar.url.com/u=test"
+                    }, {
+                        _id: "charlie",
+                        name: "Charlie Colinson",
+                        avatarUrl: "http://avatar.url.com/u=charlie_colinson"
+                    }]);
                     done();
                 });
             });
         });
-        it("responds with status code 500 if database error", function(done) {
-            authenticateUser(testUser, testToken, function() {
-                allUsers.toArray.callsArgWith(0, {err: "Database failure"}, null);
+        it("responds with status code 500 if database error", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                allUsers.toArray.callsArgWith(0, {
+                    err: "Database failure"
+                }, null);
 
-                request({url: requestUrl, jar: cookieJar}, function(error, response) {
+                request({
+                    url: requestUrl,
+                    jar: cookieJar
+                }, function (error, response) {
                     assert.equal(response.statusCode, 500);
                     done();
                 });
+            });
+        });
+    });
+    describe("POST /api/newGuest", function () {
+        var requestUrl = baseUrl + "/api/newGuest";
+        it("updates the database with a new guest user", function (done) {
+            request.post({
+                url: requestUrl,
+                json: {
+                    name: "New Guest"
+                }
+            }, function (error, response) {
+                //the id of the guest is a valid UUID
+                assert.match(dbCollections.users.update.getCall(0).args[1]._id,
+                    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+                assert.equal(dbCollections.users.update.getCall(0).args[1].name, "New Guest");
+                done();
+            });
+        });
+        it("responds with status 201 if request succeeds", function (done) {
+            request.post({
+                url: requestUrl,
+                json: {
+                    name: "New Guest"
+                }
+            }, function (error, response) {
+                assert.equal(response.statusCode, 201);
+                done();
             });
         });
     });

@@ -5,17 +5,34 @@
         <title>Chat</title>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.1/angular.min.js"></script>
         <script src="js/main.js"></script>
+        <link href="css/main.css" rel="stylesheet" type="text/css">
     </head>
     <body ng-controller="ChatController">
-        <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
+        <button ng-show="!loggedIn" ng-click="githubLogin()">Log in with github</button><br>
+        <form ng-show="!loggedIn" ng-submit="guestLogin()">
+            <input type="text" ng-model="nameInputBox" placeholder="Username" required></input>
+            <input  type="submit" value="Log in as guest"></input>
+        </form>
         <section ng-show="loggedIn">
-            <p>Logged in as {{user.name}}.</p>
+            <p>Logged in as {{myUserData.name}}.</p>
             <h2>List of registered users</h2>
             <ul>
-                <li ng-repeat="user in users">
+                <li ng-repeat="user in registeredUsers">
                     {{user.name}}
+                    <img ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar" style="width:50px;height:50px;">
+                    <button ng-disabled="myUserData._id===user._id" ng-click="startConversation(user._id)">Start a conversation</button>
                 </li>
             </ul>
+        </section>
+        <section>
+            <div class="conversation-div" ng-repeat="conversation in myConversations">
+                Conversation {{conversation._id}}
+                <ul>
+                    <li ng-repeat="message in conversation.messages">
+                        {{message.text}} - {{message.timestamp}}
+                    </li>
+                </ul>
+            </div>
         </section>
     </body>
 </html>
