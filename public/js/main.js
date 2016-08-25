@@ -6,17 +6,17 @@
     app.controller("ChatController", function ($scope, $http) {
         $scope.loggedIn = false;
 
+        //Bindable functions
         $scope.guestLogin = guestLogin;
         $scope.githubLogin = githubLogin;
         $scope.loadUserInfo = loadUserInfo;
         $scope.startConversation = startConversation;
         $scope.getConversations = getConversations;
-
         $scope.sendMessage = sendMessage;
-        $scope.newMessageValues = {};
-
         $scope.getUserFromId = getUserFromId;
 
+        //Bindable variables
+        $scope.newMessageValues = {};
         $scope.myUserData = {};
         $scope.registeredUsers = [];
         $scope.nameInputBox = "";

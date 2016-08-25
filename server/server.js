@@ -148,14 +148,12 @@ module.exports = function (port, db, githubAuthoriser) {
     });
 
     app.get("/api/conversations", function (req, res) {
-        var requestingUser = {};
         users.findOne({
             _id: req.session.user
         }, function (err, user) {
             if (!err) {
-                requestingUser = user;
                 conversations.find({
-                    userids: requestingUser._id
+                    userids: user._id
                 }).toArray(function (err, relevantConversations) {
                     res.json(relevantConversations);
                 });
