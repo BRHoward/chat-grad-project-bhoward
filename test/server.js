@@ -391,6 +391,21 @@ describe("server", function () {
                 });
             });
         });
+        it("responds with status 404 if relevant users are not found", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                relevantUsers.toArray.callsArgWith(0, null, null);
+                request.post({
+                    url: requestUrl,
+                    json: {
+                        userIds: ["bob", "charlie"]
+                    },
+                    jar: cookieJar
+                }, function (error, response) {
+                    assert.equal(response.statusCode, 404);
+                    done();
+                });
+            });
+        });
     });
     describe("GET /api/conversations", function () {
         var requestUrl = baseUrl + "/api/conversations";
@@ -439,6 +454,31 @@ describe("server", function () {
                 });
             });
         });
+        it("responds with status 404 if the user is not found", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                dbCollections.users.findOne.callsArgWith(1, null, null);
+                request({
+                    url: requestUrl,
+                    jar: cookieJar
+                }, function (error, response, body) {
+                    assert.equal(response.statusCode, 404);
+                    done();
+                });
+            });
+        });
+        it("responds with status 404 if the conversations are not found", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                dbCollections.users.findOne.callsArgWith(1, null, testUser);
+                relevantConversations.toArray.callsArgWith(0, null, null);
+                request({
+                    url: requestUrl,
+                    jar: cookieJar
+                }, function (error, response, body) {
+                    assert.equal(response.statusCode, 404);
+                    done();
+                });
+            });
+        });
     });
     describe("POST /api/newMessage", function (req, res) {
         var requestUrl = baseUrl + "/api/newMessage";
@@ -473,6 +513,22 @@ describe("server", function () {
                     jar: cookieJar
                 }, function (error, response) {
                     assert.equal(response.statusCode, 500);
+                    done();
+                });
+            });
+        });
+        it("responds with status 404 if user is not found", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                dbCollections.users.findOne.callsArgWith(1, null, null);
+                request.post({
+                    url: requestUrl,
+                    json: {
+                        conversationId: "110ec58a-a0f2-4ac4-8393-c866d813b8d1",
+                        messageText: "newMessage"
+                    },
+                    jar: cookieJar
+                }, function (error, response) {
+                    assert.equal(response.statusCode, 404);
                     done();
                 });
             });

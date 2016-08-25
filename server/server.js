@@ -15,8 +15,6 @@ module.exports = function (port, db, githubAuthoriser) {
     var conversations = db.collection("conversations");
     var sessions = {};
 
-    var latestGuestID = 0;
-
     function conversation(users) {
         this._id = uuid.v4();
         this.userids = users;
@@ -67,7 +65,6 @@ module.exports = function (port, db, githubAuthoriser) {
     app.post("/api/newGuest", function (req, res) {
         var guestID = uuid.v4();
         var guestName = req.body.name;
-        latestGuestID++;
 
         users.insertOne({
             _id: guestID,
@@ -80,7 +77,6 @@ module.exports = function (port, db, githubAuthoriser) {
             user: guestID
         };
         res.cookie("sessionToken", guestID);
-        latestGuestID++;
         res.sendStatus(201);
     });
 
@@ -107,13 +103,19 @@ module.exports = function (port, db, githubAuthoriser) {
             }
         }).toArray(function (err, foundUsers) {
             if (!err) {
-                var foundUsersIds = foundUsers.map(function (foundUser) {
-                    return foundUser._id;
-                });
-                var newConvo = new conversation(foundUsersIds);
-                conversations.insertOne(newConvo);
-                res.sendStatus(201);
+                if (foundUsers) {
+                    var foundUsersIds = foundUsers.map(function (foundUser) {
+                        return foundUser._id;
+                    });
+                    var newConvo = new conversation(foundUsersIds);
+                    conversations.insertOne(newConvo);
+                    res.sendStatus(201);
+                } else {
+                    //relevant users cannot be found
+                    res.sendStatus(404);
+                }
             } else {
+                //database error
                 res.sendStatus(500);
             }
         });
@@ -152,12 +154,23 @@ module.exports = function (port, db, githubAuthoriser) {
             _id: req.session.user
         }, function (err, user) {
             if (!err) {
-                conversations.find({
-                    userids: user._id
-                }).toArray(function (err, relevantConversations) {
-                    res.json(relevantConversations);
-                });
+                if (user) {
+                    conversations.find({
+                        userids: user._id
+                    }).toArray(function (err, relevantConversations) {
+                        if (relevantConversations) {
+                            res.json(relevantConversations);
+                        } else {
+                            //conversations not found
+                            res.sendStatus(404);
+                        }
+                    });
+                } else {
+                    //user not found
+                    res.sendStatus(404);
+                }
             } else {
+                //database error
                 res.sendStatus(500);
             }
         });
@@ -169,16 +182,22 @@ module.exports = function (port, db, githubAuthoriser) {
             _id: req.session.user
         }, function (err, user) {
             if (!err) {
-                var newMessage = new message(user._id, req.body.messageText);
-                conversations.findOneAndUpdate({
-                    _id: req.body.conversationId
-                }, {
-                    $push: {
-                        messages: newMessage
-                    }
-                });
-                res.sendStatus(201);
+                if (user) {
+                    var newMessage = new message(user._id, req.body.messageText);
+                    conversations.findOneAndUpdate({
+                        _id: req.body.conversationId
+                    }, {
+                        $push: {
+                            messages: newMessage
+                        }
+                    });
+                    res.sendStatus(201);
+                } else {
+                    //user not found
+                    res.sendStatus(404);
+                }
             } else {
+                //database error
                 res.sendStatus(500);
             }
         });

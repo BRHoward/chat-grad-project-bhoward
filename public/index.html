@@ -15,19 +15,19 @@
             <input  type="submit" value="Log in as guest"></input>
         </form>
         <section ng-show="loggedIn">
-            <p>Logged in as {{myUserData.name}}.</p>
+            <p>Logged in as {{currentUserData.name}}.</p>
             <h2>List of registered users</h2>
             <ul>
                 <li ng-repeat="user in registeredUsers">
                     {{user.name}}
-                    <img ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar" style="width:50px;height:50px;">
-                    <button ng-disabled="myUserData._id===user._id" ng-click="startConversation(user._id)">Start a conversation</button>
+                    <img class="avatar" ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar">
+                    <button ng-disabled="currentUserData._id===user._id" ng-click="startConversation(user._id)">Start a conversation</button>
                 </li>
             </ul>
         </section>
         <section>
             <div class="conversation-div" ng-repeat="conversation in myConversations">
-                Conversation {{conversation._id}}
+                Conversation {{conversation.id}}
                 <ul>
                     <li ng-repeat="message in conversation.messages">
                         {{getUserFromId(message.userid).name}} - {{message.text}} ({{message.timestamp | date:"dd/MM/yyyy 'at' h:mma"}})
@@ -39,5 +39,6 @@
                 </form>
             </div>
         </section>
+        <p ng-show="loggedIn">{{errorText}}<p>
     </body>
 </html>

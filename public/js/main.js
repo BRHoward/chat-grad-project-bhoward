@@ -17,20 +17,24 @@
 
         //Bindable variables
         $scope.newMessageValues = {};
-        $scope.myUserData = {};
+        $scope.currentUserData = {};
         $scope.registeredUsers = [];
         $scope.nameInputBox = "";
         $scope.myConversations = [];
+        $scope.errorText = "";
 
         function loadUserInfo() {
             $http.get("/api/user")
                 .then(function (userResult) {
                     $scope.loggedIn = true;
-                    $scope.myUserData = userResult.data;
+                    $scope.currentUserData = userResult.data;
                     $http.get("/api/users")
                         .then(function (result) {
                             $scope.registeredUsers = result.data;
                         });
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to get user data : " + response.status + " - " + response.statusText;
                 });
         }
 
@@ -51,6 +55,10 @@
                 })
                 .then(function (response) {
                     $scope.loadUserInfo();
+                    $scope.errorText = "";
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to login as guest : " + response.status + " - " + response.statusText;
                 });
         }
 
@@ -59,11 +67,14 @@
                     method: "POST",
                     url: "/api/newConversation",
                     data: {
-                        userIds: [$scope.myUserData._id, otherUsersId]
+                        userIds: [$scope.currentUserData._id, otherUsersId]
                     }
                 })
                 .then(function (response) {
                     $scope.getConversations();
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to start conversation : " + response.status + " - " + response.statusText;
                 });
         }
 
@@ -72,6 +83,9 @@
                 //TODO: instead of replacing all the conversations each request
                 //      just find the differences and update the local list
                 $scope.myConversations = result.data;
+            }, function (response) {
+                $scope.errorText =
+                    "Failed to fetch conversations : " + response.status + " - " + response.statusText;
             });
         }
 
@@ -87,6 +101,9 @@
                 .then(function (response) {
                     $scope.newMessageValues[conversationId] = "";
                     $scope.getConversations();
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to send message : " + response.status + " - " + response.statusText;
                 });
         }
 
