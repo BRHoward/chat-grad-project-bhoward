@@ -5,17 +5,40 @@
         <title>Chat</title>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.1/angular.min.js"></script>
         <script src="js/main.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+        <link href="css/main.css" rel="stylesheet" type="text/css">
     </head>
     <body ng-controller="ChatController">
-        <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
+        <button ng-show="!loggedIn" ng-click="githubLogin()">Log in with github</button><br>
+        <form ng-show="!loggedIn" ng-submit="guestLogin()">
+            <input type="text" ng-model="nameInputBox" placeholder="Username" required></input>
+            <input  type="submit" value="Log in as guest"></input>
+        </form>
         <section ng-show="loggedIn">
-            <p>Logged in as {{user.name}}.</p>
+            <p>Logged in as {{currentUserData.name}}.</p>
             <h2>List of registered users</h2>
             <ul>
-                <li ng-repeat="user in users">
+                <li ng-repeat="user in registeredUsers">
                     {{user.name}}
+                    <img class="avatar" ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar">
+                    <button ng-disabled="currentUserData.id===user.id" ng-click="startConversation(user.id)">Start a conversation</button>
                 </li>
             </ul>
         </section>
+        <section>
+            <div class="conversation-div" ng-repeat="conversation in currentConversations">
+                Conversation {{conversation.id}}
+                <ul>
+                    <li ng-repeat="message in conversation.messages">
+                        {{getUserFromId(message.userid).name}} - {{message.text}} ({{message.timestamp | date:"dd/MM/yyyy 'at' h:mma"}})
+                    </li>
+                </ul>
+                <form ng-submit="sendMessage(conversation.id)">
+                    <input type="text" ng-model="newMessageValues[conversation.id]" placeholder = "Write message here"></input>
+                    <input type="submit" value="Send"></input>
+                </form>
+            </div>
+        </section>
+        <p ng-show="loggedIn">{{errorText}}<p>
     </body>
 </html>
