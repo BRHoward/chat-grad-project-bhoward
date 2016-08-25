@@ -8,12 +8,12 @@ var baseUrl = "http://localhost:" + testPort;
 var oauthClientId = "1234clientId";
 
 var testUser = {
-    _id: "bob",
+    id: "bob",
     name: "Bob Bilson",
     avatarUrl: "http://avatar.url.com/u=test"
 };
 var testUser2 = {
-    _id: "charlie",
+    id: "charlie",
     name: "Charlie Colinson",
     avatarUrl: "http://avatar.url.com/u=charlie_colinson"
 };
@@ -23,12 +23,12 @@ var testGithubUser = {
     avatar_url: "http://avatar.url.com/u=test"
 };
 var testConversation1 = {
-    _id: "110ec58a-a0f2-4ac4-8393-c866d813b8d1",
+    id: "110ec58a-a0f2-4ac4-8393-c866d813b8d1",
     userids: ["bob", "charlie"],
     messages: []
 };
 var testConversation2 = {
-    _id: "110ec58a-a0f2-4ac4-8393-c866d813b8d2",
+    id: "110ec58a-a0f2-4ac4-8393-c866d813b8d2",
     userids: ["david", "edward"],
     messages: []
 };
@@ -66,7 +66,7 @@ describe("server", function () {
 
         githubAuthoriser = {
             authorise: function () {},
-            oAuthUri: "https://github.com/login/oauth/authorize?client_id=" + oauthClientId
+            oAuthUri: "https://github.com/login/oauth/authorize?clientid=" + oauthClientId
         };
         serverInstance = server(testPort, db, githubAuthoriser);
     });
@@ -140,7 +140,7 @@ describe("server", function () {
             request(requestUrl, function (error, response) {
                 assert(dbCollections.users.insertOne.calledOnce);
                 assert.deepEqual(dbCollections.users.insertOne.firstCall.args[0], {
-                    _id: "bob",
+                    id: "bob",
                     name: "Bob Bilson",
                     avatarUrl: "http://avatar.url.com/u=test"
                 });
@@ -165,7 +165,7 @@ describe("server", function () {
         it("responds with a body that is a JSON object containing a URI to GitHub with a client id", function (done) {
             request(requestUrl, function (error, response, body) {
                 assert.deepEqual(JSON.parse(body), {
-                    uri: "https://github.com/login/oauth/authorize?client_id=" + oauthClientId
+                    uri: "https://github.com/login/oauth/authorize?clientid=" + oauthClientId
                 });
                 done();
             });
@@ -207,7 +207,7 @@ describe("server", function () {
                     jar: cookieJar
                 }, function (error, response, body) {
                     assert.deepEqual(JSON.parse(body), {
-                        _id: "bob",
+                        id: "bob",
                         name: "Bob Bilson",
                         avatarUrl: "http://avatar.url.com/u=test"
                     });
@@ -282,11 +282,11 @@ describe("server", function () {
                     jar: cookieJar
                 }, function (error, response, body) {
                     assert.deepEqual(JSON.parse(body), [{
-                        _id: "bob",
+                        id: "bob",
                         name: "Bob Bilson",
                         avatarUrl: "http://avatar.url.com/u=test"
                     }, {
-                        _id: "charlie",
+                        id: "charlie",
                         name: "Charlie Colinson",
                         avatarUrl: "http://avatar.url.com/u=charlie_colinson"
                     }]);
@@ -321,7 +321,7 @@ describe("server", function () {
                     }
                 }, function (error, response) {
                     //the id of the guest is a valid UUID
-                    assert.match(dbCollections.users.insertOne.getCall(0).args[0]._id, UIDRegex);
+                    assert.match(dbCollections.users.insertOne.getCall(0).args[0].id, UIDRegex);
                     assert.equal(dbCollections.users.insertOne.getCall(0).args[0].name, "New Guest");
                     done();
                 });
@@ -364,7 +364,7 @@ describe("server", function () {
                     jar: cookieJar
                 }, function (error, response) {
                     assert.equal(dbCollections.conversations.insertOne.calledOnce, true);
-                    assert.match(dbCollections.conversations.insertOne.firstCall.args[0]._id, UIDRegex);
+                    assert.match(dbCollections.conversations.insertOne.firstCall.args[0].id, UIDRegex);
                     assert.deepEqual(dbCollections.conversations.insertOne.firstCall.args[0].userids, [
                         "bob", "charlie"
                     ]);
@@ -428,11 +428,11 @@ describe("server", function () {
                     jar: cookieJar
                 }, function (error, response, body) {
                     assert.deepEqual(JSON.parse(body), [{
-                        _id: "110ec58a-a0f2-4ac4-8393-c866d813b8d1",
+                        id: "110ec58a-a0f2-4ac4-8393-c866d813b8d1",
                         userids: ["bob", "charlie"],
                         messages: []
                     }, {
-                        _id: "110ec58a-a0f2-4ac4-8393-c866d813b8d2",
+                        id: "110ec58a-a0f2-4ac4-8393-c866d813b8d2",
                         userids: ["david", "edward"],
                         messages: []
                     }]);
@@ -494,7 +494,7 @@ describe("server", function () {
                     }
                 }, function (error, response) {
                     assert.equal(dbCollections.conversations.findOneAndUpdate.calledOnce, true);
-                    assert.match(dbCollections.conversations.findOneAndUpdate.firstCall.args[0]._id, UIDRegex);
+                    assert.match(dbCollections.conversations.findOneAndUpdate.firstCall.args[0].id, UIDRegex);
                     done();
                 });
             });

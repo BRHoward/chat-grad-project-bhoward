@@ -20,7 +20,7 @@
         $scope.currentUserData = {};
         $scope.registeredUsers = [];
         $scope.nameInputBox = "";
-        $scope.myConversations = [];
+        $scope.currentConversations = [];
         $scope.errorText = "";
 
         function loadUserInfo() {
@@ -67,7 +67,7 @@
                     method: "POST",
                     url: "/api/newConversation",
                     data: {
-                        userIds: [$scope.currentUserData._id, otherUsersId]
+                        userIds: [$scope.currentUserData.id, otherUsersId]
                     }
                 })
                 .then(function (response) {
@@ -82,7 +82,7 @@
             $http.get("/api/conversations").then(function (result) {
                 //TODO: instead of replacing all the conversations each request
                 //      just find the differences and update the local list
-                $scope.myConversations = result.data;
+                $scope.currentConversations = result.data;
             }, function (response) {
                 $scope.errorText =
                     "Failed to fetch conversations : " + response.status + " - " + response.statusText;
@@ -109,7 +109,7 @@
 
         function getUserFromId(id) {
             return _.find($scope.registeredUsers, function (registeredUser) {
-                return registeredUser._id === id;
+                return registeredUser.id === id;
             });
         }
 

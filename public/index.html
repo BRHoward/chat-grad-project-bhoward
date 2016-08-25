@@ -21,20 +21,20 @@
                 <li ng-repeat="user in registeredUsers">
                     {{user.name}}
                     <img class="avatar" ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar">
-                    <button ng-disabled="currentUserData._id===user._id" ng-click="startConversation(user._id)">Start a conversation</button>
+                    <button ng-disabled="currentUserData.id===user.id" ng-click="startConversation(user.id)">Start a conversation</button>
                 </li>
             </ul>
         </section>
         <section>
-            <div class="conversation-div" ng-repeat="conversation in myConversations">
+            <div class="conversation-div" ng-repeat="conversation in currentConversations">
                 Conversation {{conversation.id}}
                 <ul>
                     <li ng-repeat="message in conversation.messages">
                         {{getUserFromId(message.userid).name}} - {{message.text}} ({{message.timestamp | date:"dd/MM/yyyy 'at' h:mma"}})
                     </li>
                 </ul>
-                <form ng-submit="sendMessage(conversation._id)">
-                    <input type="text" ng-model="newMessageValues[conversation._id]" placeholder = "Write message here"></input>
+                <form ng-submit="sendMessage(conversation.id)">
+                    <input type="text" ng-model="newMessageValues[conversation.id]" placeholder = "Write message here"></input>
                     <input type="submit" value="Send"></input>
                 </form>
             </div>

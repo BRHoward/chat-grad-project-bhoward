@@ -16,7 +16,7 @@ module.exports = function (port, db, githubAuthoriser) {
     var sessions = {};
 
     function conversation(users) {
-        this._id = uuid.v4();
+        this.id = uuid.v4();
         this.userids = users;
         this.messages = [];
     }
@@ -32,12 +32,12 @@ module.exports = function (port, db, githubAuthoriser) {
             if (githubUser) {
                 //Real github account
                 users.findOne({
-                    _id: githubUser.login
+                    id: githubUser.login
                 }, function (err, user) {
                     if (!user) {
                         // TODO: Wait for this operation to complete
                         users.insertOne({
-                            _id: githubUser.login,
+                            id: githubUser.login,
                             name: githubUser.name,
                             avatarUrl: githubUser.avatar_url
                         });
@@ -67,7 +67,7 @@ module.exports = function (port, db, githubAuthoriser) {
         var guestName = req.body.name;
 
         users.insertOne({
-            _id: guestID,
+            id: guestID,
             name: guestName,
             avatarUrl: "http://s.mtgprice.com/images/unknown.png"
         });
@@ -98,14 +98,14 @@ module.exports = function (port, db, githubAuthoriser) {
         var userIds = req.body.userIds;
         //find all the users in the database that should be part of the new conversation
         users.find({
-            _id: {
+            id: {
                 $in: userIds
             }
         }).toArray(function (err, foundUsers) {
             if (!err) {
                 if (foundUsers) {
                     var foundUsersIds = foundUsers.map(function (foundUser) {
-                        return foundUser._id;
+                        return foundUser.id;
                     });
                     var newConvo = new conversation(foundUsersIds);
                     conversations.insertOne(newConvo);
@@ -123,7 +123,7 @@ module.exports = function (port, db, githubAuthoriser) {
 
     app.get("/api/user", function (req, res) {
         users.findOne({
-            _id: req.session.user
+            id: req.session.user
         }, function (err, user) {
             if (!err) {
                 res.json(user);
@@ -138,7 +138,7 @@ module.exports = function (port, db, githubAuthoriser) {
             if (!err) {
                 res.json(docs.map(function (user) {
                     return {
-                        _id: user._id,
+                        id: user.id,
                         name: user.name,
                         avatarUrl: user.avatarUrl
                     };
@@ -151,12 +151,12 @@ module.exports = function (port, db, githubAuthoriser) {
 
     app.get("/api/conversations", function (req, res) {
         users.findOne({
-            _id: req.session.user
+            id: req.session.user
         }, function (err, user) {
             if (!err) {
                 if (user) {
                     conversations.find({
-                        userids: user._id
+                        userids: user.id
                     }).toArray(function (err, relevantConversations) {
                         if (relevantConversations) {
                             res.json(relevantConversations);
@@ -179,13 +179,13 @@ module.exports = function (port, db, githubAuthoriser) {
 
     app.post("/api/newMessage", function (req, res) {
         users.findOne({
-            _id: req.session.user
+            id: req.session.user
         }, function (err, user) {
             if (!err) {
                 if (user) {
-                    var newMessage = new message(user._id, req.body.messageText);
+                    var newMessage = new message(user.id, req.body.messageText);
                     conversations.findOneAndUpdate({
-                        _id: req.body.conversationId
+                        id: req.body.conversationId
                     }, {
                         $push: {
                             messages: newMessage
