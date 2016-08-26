@@ -83,9 +83,8 @@
 
         function getConversations(firstLoad) {
             $http.get("/api/conversations").then(function (result) {
-                //Dont show notifications the first time we load the page
+                $scope.unseenMessages = updateCurrentConversations($scope.currentConversations, result.data);
                 if (!firstLoad) {
-                    $scope.unseenMessages = findUnseenMessages($scope.currentConversations, result.data);
                     $scope.unseenMessages.forEach(function (unseenMessage) {
                         if (unseenMessage.userid !== $scope.currentUserData.id) {
                             displayMessageNotification(unseenMessage);
@@ -93,8 +92,6 @@
 
                     });
                 }
-                updateCurrentConversations($scope.currentConversations, result.data);
-                //$scope.currentConversations = result.data;
             }, function (response) {
                 $scope.errorText =
                     "Failed to fetch conversations : " + response.status + " - " + response.statusText;
@@ -125,29 +122,6 @@
             });
         }
 
-        function findUnseenMessages(oldConversations, newConversations) {
-            //goes through all conversations and creates an array of all the local messages
-            var oldMessages = [];
-            oldConversations.forEach(function (conversation) {
-                oldMessages = oldMessages.concat(conversation.messages);
-            });
-            //goes through all conversations and creates an array of all the fetched messages
-            var newMessages = [];
-            newConversations.forEach(function (conversation) {
-                newMessages = newMessages.concat(conversation.messages);
-            });
-            //remove seen messages from newMessages array leaving only unseen messages
-            for (var i = 0; i < oldMessages.length; i++) {
-                for (var j = 0; j < newMessages.length; j++) {
-                    if (oldMessages[i].id === newMessages[j].id) {
-                        newMessages.splice(j, 1);
-                        break;
-                    }
-                }
-            }
-            return newMessages;
-        }
-
         function displayMessageNotification(message) {
             var messageFrom = getUserFromId(message.userid).name;
             toastr.info(message.text, "Message from " + messageFrom);
@@ -176,9 +150,11 @@
         /*
         Rather than replace the whole conversation list each get, this function 
         just updates the local list with new messages. This helps remove flicker, allows 
-        certain angular animations and lets client retain the 'cleared' field for messages
+        certain angular animations and lets client retain the 'cleared' field for messages.
+        This also returns a list of all the new messages, used for notifications.
         */
         function updateCurrentConversations(oldConversations, newConversations) {
+            var unseenMessages = [];
             console.log("updating the current conversation");
             console.log(oldConversations);
             console.log(newConversations);
@@ -202,9 +178,11 @@
                 for (var j = 0; j < newConvo.messages.length; j++) {
                     if (!oldConvo.messages[j] || oldConvo.messages[j].id !== newConvo.messages[j].id) {
                         oldConvo.messages.splice(j, 0, newConvo.messages[j]);
+                        unseenMessages.push(newConvo.messages[j]);
                     }
                 }
             }
+            return unseenMessages;
         }
         /*
             TODO: allow users to clear the conversations
