@@ -10,7 +10,7 @@
         $scope.githubLogin = githubLogin;
         $scope.loadUserInfo = loadUserInfo;
         $scope.startConversation = startConversation;
-        $scope.getConversations = getConversations;
+        $scope.refreshConversations = refreshConversations;
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
         $scope.setIfConversationIsCleared = setIfConversationIsCleared;
@@ -73,14 +73,14 @@
                     }
                 })
                 .then(function (response) {
-                    $scope.getConversations();
+                    $scope.refreshConversations();
                 }, function (response) {
                     $scope.errorText =
                         "Failed to start conversation : " + response.status + " - " + response.statusText;
                 });
         }
 
-        function getConversations(firstLoad) {
+        function refreshConversations(firstLoad) {
             $http.get("/api/conversations").then(function (result) {
                 $scope.unseenMessages = updateCurrentConversations($scope.currentConversations, result.data);
                 if (!firstLoad) {
@@ -108,7 +108,7 @@
                 })
                 .then(function (response) {
                     $scope.newMessageValues[conversationId] = "";
-                    $scope.getConversations();
+                    $scope.refreshConversations();
                 }, function (response) {
                     $scope.errorText =
                         "Failed to send message : " + response.status + " - " + response.statusText;
@@ -167,11 +167,11 @@
 
         angular.element(document).ready(function () {
             $scope.loadUserInfo();
-            $scope.getConversations(true);
+            $scope.refreshConversations(true);
             //polling the server for new users and new messages
             setInterval(function () {
                 loadUserInfo();
-                getConversations();
+                refreshConversations();
             }, 10000);
         });
     });
