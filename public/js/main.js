@@ -164,9 +164,7 @@
                     console.log("adding a new conversation to the local list");
                     oldConversations.splice(i, 0, newConversations[i]);
                 } else {
-                    //if the conversation already exists on the client side then just
-                    //add in the new messages
-                    console.log("updating the conversation with new messages");
+                    //if conversation already exists on client side then add the new messages
                     updateMessages(oldConversations[i], newConversations[i]);
                 }
             }
