@@ -4,7 +4,6 @@
     var app = angular.module("ChatApp", ["ngAnimate", "toastr"]);
 
     app.controller("ChatController", function ($scope, $http, toastr) {
-        $scope.loggedIn = false;
 
         //Bindable functions
         $scope.guestLogin = guestLogin;
@@ -25,6 +24,7 @@
         $scope.currentConversations = [];
         $scope.errorText = "";
         $scope.unseenMessages = [];
+        $scope.loggedIn = false;
 
         function loadUserInfo() {
             $http.get("/api/user")
@@ -148,20 +148,16 @@
         }
 
         /*
-        Rather than replace the whole conversation list each get, this function 
+        Rather than replace the whole conversation list each fetch, this function 
         just updates the local list with new messages. This helps remove flicker, allows 
         certain angular animations and lets client retain the 'cleared' field for messages.
         This also returns a list of all the new messages, used for notifications.
         */
         function updateCurrentConversations(oldConversations, newConversations) {
             var unseenMessages = [];
-            console.log("updating the current conversation");
-            console.log(oldConversations);
-            console.log(newConversations);
             //add any new conversations to the local list
             for (var i = 0; i < newConversations.length; i++) {
                 if (!oldConversations[i] || oldConversations[i].id !== newConversations[i].id) {
-                    console.log("adding a new conversation to the local list");
                     oldConversations.splice(i, 0, newConversations[i]);
                 } else {
                     //if conversation already exists on client side then add the new messages
