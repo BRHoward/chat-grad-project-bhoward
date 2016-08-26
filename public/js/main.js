@@ -13,8 +13,7 @@
         $scope.getConversations = getConversations;
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
-        $scope.clearConversation = clearConversation;
-        $scope.showAllConversation = showAllConversation;
+        $scope.setIfConversationIsCleared = setIfConversationIsCleared;
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -127,21 +126,11 @@
             toastr.info(message.text, "Message from " + messageFrom);
         }
 
-        function clearConversation(conversationId) {
+        function setIfConversationIsCleared(conversationId, cleared) {
             $scope.currentConversations.forEach(function (conversation) {
                 if (conversation.id === conversationId) {
                     conversation.messages.forEach(function (message) {
-                        message.cleared = true;
-                    });
-                }
-            });
-        }
-
-        function showAllConversation(conversationId) {
-            $scope.currentConversations.forEach(function (conversation) {
-                if (conversation.id === conversationId) {
-                    conversation.messages.forEach(function (message) {
-                        message.cleared = false;
+                        message.cleared = cleared;
                     });
                 }
             });
@@ -164,7 +153,6 @@
                     updateMessages(oldConversations[i], newConversations[i]);
                 }
             }
-
             //taking this out as a seperate function to avoid too many nested statements
             function updateMessages(oldConvo, newConvo) {
                 for (var j = 0; j < newConvo.messages.length; j++) {
