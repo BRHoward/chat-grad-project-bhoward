@@ -13,7 +13,7 @@
         $scope.refreshConversations = refreshConversations;
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
-        $scope.setIfConversationIsCleared = setIfConversationIsCleared;
+        $scope.setClearedForConversationMessages = setClearedForConversationMessages;
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -126,7 +126,7 @@
             toastr.info(message.text, "Message from " + messageFrom);
         }
 
-        function setIfConversationIsCleared(conversationId, cleared) {
+        function setClearedForConversationMessages(conversationId, cleared) {
             $scope.currentConversations.forEach(function (conversation) {
                 if (conversation.id === conversationId) {
                     conversation.messages.forEach(function (message) {
