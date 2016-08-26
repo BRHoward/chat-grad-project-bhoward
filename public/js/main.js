@@ -148,8 +148,8 @@
         }
 
         /*
-        Rather than replace the whole conversation list each fetch, this function 
-        just updates the local list with new messages. This helps remove flicker, allows 
+        Rather than replace the whole conversation list each fetch, this function
+        just updates the local list with new messages. This helps remove flicker, allows
         certain angular animations and lets client retain the 'cleared' field for messages.
         This also returns a list of all the new messages, used for notifications.
         */
@@ -167,8 +167,6 @@
 
             //taking this out as a seperate function to avoid too many nested statements
             function updateMessages(oldConvo, newConvo) {
-                console.log(oldConvo);
-                console.log(newConvo);
                 for (var j = 0; j < newConvo.messages.length; j++) {
                     if (!oldConvo.messages[j] || oldConvo.messages[j].id !== newConvo.messages[j].id) {
                         oldConvo.messages.splice(j, 0, newConvo.messages[j]);
