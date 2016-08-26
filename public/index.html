@@ -22,8 +22,10 @@
             <div class="usersColumn">
                 <p>Logged in as {{currentUserData.name}}.</p>
                 <h2>List of registered users</h2>
+                <p>search users</p>
+                <input type="text" id="userSearch" ng-model="userSearchQuery"></input>
                 <ul>
-                    <li ng-repeat="user in registeredUsers">
+                    <li ng-repeat="user in registeredUsers | filter:userSearchQuery">
                         {{user.name}}
                         <img class="avatar" ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar">
                         <button ng-disabled="currentUserData.id===user.id" ng-click="startConversation(user.id)">Chat</button>
