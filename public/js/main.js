@@ -1,7 +1,7 @@
 /*global console, _*/
 
 (function () {
-    var app = angular.module("ChatApp", ['ngAnimate', 'toastr']);
+    var app = angular.module("ChatApp", ["ngAnimate", "toastr"]);
 
     app.controller("ChatController", function ($scope, $http, toastr) {
         $scope.loggedIn = false;
@@ -14,6 +14,8 @@
         $scope.getConversations = getConversations;
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
+        $scope.clearConversation = clearConversation;
+        $scope.showAllConversation = showAllConversation;
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -91,7 +93,8 @@
 
                     });
                 }
-                $scope.currentConversations = result.data;
+                updateCurrentConversations($scope.currentConversations, result.data);
+                //$scope.currentConversations = result.data;
             }, function (response) {
                 $scope.errorText =
                     "Failed to fetch conversations : " + response.status + " - " + response.statusText;
@@ -147,7 +150,61 @@
 
         function displayMessageNotification(message) {
             var messageFrom = getUserFromId(message.userid).name;
-            toastr.info(message.text,"Message from " + messageFrom)
+            toastr.info(message.text, "Message from " + messageFrom);
+        }
+
+        function clearConversation(conversationId) {
+            $scope.currentConversations.forEach(function (conversation) {
+                if (conversation.id === conversationId) {
+                    conversation.messages.forEach(function (message) {
+                        message.cleared = true;
+                    });
+                }
+            });
+        }
+
+        function showAllConversation(conversationId) {
+            $scope.currentConversations.forEach(function (conversation) {
+                if (conversation.id === conversationId) {
+                    conversation.messages.forEach(function (message) {
+                        message.cleared = false;
+                    });
+                }
+            });
+        }
+
+        /*
+        Rather than replace the whole conversation list each get, this function 
+        just updates the local list with new messages. This helps remove flicker, allows 
+        certain angular animations and lets client retain the 'cleared' field for messages
+        */
+        function updateCurrentConversations(oldConversations, newConversations) {
+            console.log("updating the current conversation");
+            console.log(oldConversations);
+            console.log(newConversations);
+            //add any new conversations to the local list
+            for (var i = 0; i < newConversations.length; i++) {
+                if (!oldConversations[i] || oldConversations[i].id !== newConversations[i].id) {
+                    console.log("adding a new conversation to the local list");
+                    oldConversations.splice(i, 0, newConversations[i]);
+                } else {
+                    //if the conversation already exists on the client side then just
+                    //add in the new messages
+                    console.log("updating the conversation with new messages");
+                    updateMessages(oldConversations[i], newConversations[i]);
+                }
+            }
+
+            //taking this out as a seperate function to avoid too many nested statements
+            function updateMessages(oldConvo, newConvo) {
+                console.log(oldConvo);
+                console.log(newConvo);
+                for (var j = 0; j < newConvo.messages.length; j++) {
+                    if (!oldConvo.messages[j] || oldConvo.messages[j].id !== newConvo.messages[j].id) {
+                        oldConvo.messages.splice(j, 0, newConvo.messages[j]);
+                    }
+                }
+            }
         }
         /*
             TODO: allow users to clear the conversations
