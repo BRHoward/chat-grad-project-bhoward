@@ -1,19 +1,19 @@
 /*global console, _*/
 
 (function () {
-    var app = angular.module("ChatApp", []);
+    var app = angular.module("ChatApp", ["ngAnimate", "toastr"]);
 
-    app.controller("ChatController", function ($scope, $http) {
-        $scope.loggedIn = false;
+    app.controller("ChatController", function ($scope, $http, toastr) {
 
         //Bindable functions
         $scope.guestLogin = guestLogin;
         $scope.githubLogin = githubLogin;
         $scope.loadUserInfo = loadUserInfo;
         $scope.startConversation = startConversation;
-        $scope.getConversations = getConversations;
+        $scope.refreshConversations = refreshConversations;
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
+        $scope.setClearedForConversationMessages = setClearedForConversationMessages;
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -22,6 +22,8 @@
         $scope.nameInputBox = "";
         $scope.currentConversations = [];
         $scope.errorText = "";
+        $scope.unseenMessages = [];
+        $scope.loggedIn = false;
 
         function loadUserInfo() {
             $http.get("/api/user")
@@ -71,18 +73,24 @@
                     }
                 })
                 .then(function (response) {
-                    $scope.getConversations();
+                    $scope.refreshConversations();
                 }, function (response) {
                     $scope.errorText =
                         "Failed to start conversation : " + response.status + " - " + response.statusText;
                 });
         }
 
-        function getConversations() {
+        function refreshConversations(firstLoad) {
             $http.get("/api/conversations").then(function (result) {
-                //TODO: instead of replacing all the conversations each request
-                //      just find the differences and update the local list
-                $scope.currentConversations = result.data;
+                $scope.unseenMessages = updateCurrentConversations($scope.currentConversations, result.data);
+                if (!firstLoad) {
+                    $scope.unseenMessages.forEach(function (unseenMessage) {
+                        if (unseenMessage.userid !== $scope.currentUserData.id) {
+                            displayMessageNotification(unseenMessage);
+                        }
+
+                    });
+                }
             }, function (response) {
                 $scope.errorText =
                     "Failed to fetch conversations : " + response.status + " - " + response.statusText;
@@ -100,7 +108,7 @@
                 })
                 .then(function (response) {
                     $scope.newMessageValues[conversationId] = "";
-                    $scope.getConversations();
+                    $scope.refreshConversations();
                 }, function (response) {
                     $scope.errorText =
                         "Failed to send message : " + response.status + " - " + response.statusText;
@@ -113,13 +121,57 @@
             });
         }
 
+        function displayMessageNotification(message) {
+            var messageFrom = getUserFromId(message.userid).name;
+            toastr.info(message.text, "Message from " + messageFrom);
+        }
+
+        function setClearedForConversationMessages(conversationId, cleared) {
+            $scope.currentConversations.forEach(function (conversation) {
+                if (conversation.id === conversationId) {
+                    conversation.messages.forEach(function (message) {
+                        message.cleared = cleared;
+                    });
+                }
+            });
+        }
+
+        /*
+        Rather than replace the whole conversation list each fetch, this function
+        just updates the local list with new messages. This helps remove flicker, allows
+        certain angular animations and lets client retain the 'cleared' field for messages.
+        This also returns a list of all the new messages, used for notifications.
+        */
+        function updateCurrentConversations(oldConversations, newConversations) {
+            var unseenMessages = [];
+            //add any new conversations to the local list
+            for (var i = 0; i < newConversations.length; i++) {
+                if (!oldConversations[i] || oldConversations[i].id !== newConversations[i].id) {
+                    oldConversations.splice(i, 0, newConversations[i]);
+                } else {
+                    //if conversation already exists on client side then add the new messages
+                    updateMessages(oldConversations[i], newConversations[i]);
+                }
+            }
+            //taking this out as a seperate function to avoid too many nested statements
+            function updateMessages(oldConvo, newConvo) {
+                for (var j = 0; j < newConvo.messages.length; j++) {
+                    if (!oldConvo.messages[j] || oldConvo.messages[j].id !== newConvo.messages[j].id) {
+                        oldConvo.messages.splice(j, 0, newConvo.messages[j]);
+                        unseenMessages.push(newConvo.messages[j]);
+                    }
+                }
+            }
+            return unseenMessages;
+        }
+
         angular.element(document).ready(function () {
             $scope.loadUserInfo();
-            $scope.getConversations();
+            $scope.refreshConversations(true);
             //polling the server for new users and new messages
             setInterval(function () {
                 loadUserInfo();
-                getConversations();
+                refreshConversations();
             }, 10000);
         });
     });
