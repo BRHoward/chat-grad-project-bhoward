@@ -25,7 +25,7 @@
                 <p>search users</p>
                 <input type="text" id="userSearch" ng-model="userSearchQuery"></input>
                 <ul>
-                    <li ng-repeat="user in registeredUsers | filter:userSearchQuery">
+                    <li ng-repeat="user in registeredUsers | filter:userSearchQuery | orderBy : 'name'">
                         {{user.name}}
                         <img class="avatar" ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar">
                         <button ng-disabled="currentUserData.id===user.id" ng-click="startConversation(user.id)">Chat</button>
