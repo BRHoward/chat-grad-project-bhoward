@@ -184,11 +184,6 @@
             }
             return unseenMessages;
         }
-        /*
-            TODO: allow users to clear the conversations
-            could be done through attaching a 'cleared' field to each message
-            messages which have this field are then hidden in the DOM
-        */
 
         angular.element(document).ready(function () {
             $scope.loadUserInfo();
