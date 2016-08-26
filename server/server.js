@@ -22,6 +22,7 @@ module.exports = function (port, db, githubAuthoriser) {
     }
 
     function message(userId, messageText) {
+        this.id = uuid.v4();
         this.userid = userId;
         this.timestamp = Date.now();
         this.text = messageText;

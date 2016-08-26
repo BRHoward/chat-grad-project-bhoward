@@ -22,6 +22,7 @@
         $scope.nameInputBox = "";
         $scope.currentConversations = [];
         $scope.errorText = "";
+        $scope.unseenMessages = [];
 
         function loadUserInfo() {
             $http.get("/api/user")
@@ -78,10 +79,14 @@
                 });
         }
 
-        function getConversations() {
+        function getConversations(firstLoad) {
             $http.get("/api/conversations").then(function (result) {
-                //TODO: instead of replacing all the conversations each request
-                //      just find the differences and update the local list
+                //TODO: make each new set of messages show up as a timed notification
+                //Dont show notifications the first time we load the page
+                if (!firstLoad) {
+                    $scope.unseenMessages =
+                        $scope.unseenMessages.concat(findUnseenMessages($scope.currentConversations, result.data));
+                }
                 $scope.currentConversations = result.data;
             }, function (response) {
                 $scope.errorText =
@@ -113,9 +118,38 @@
             });
         }
 
+        function findUnseenMessages(oldConversations, newConversations) {
+            //goes through all conversations and creates an array of all the local messages
+            var oldMessages = [];
+            oldConversations.forEach(function (conversation) {
+                oldMessages = oldMessages.concat(conversation.messages);
+            });
+            //goes through all conversations and creates an array of all the fetched messages
+            var newMessages = [];
+            newConversations.forEach(function (conversation) {
+                newMessages = newMessages.concat(conversation.messages);
+            });
+            //remove seen messages from newMessages array leaving only unseen messages
+            for (var i = 0; i < oldMessages.length; i++) {
+                for (var j = 0; j < newMessages.length; j++) {
+                    if (oldMessages[i].id === newMessages[j].id) {
+                        newMessages.splice(j, 1);
+                        break;
+                    }
+                }
+            }
+            return newMessages;
+        }
+
+        /*
+            TODO: allow users to clear the conversations
+            could be done through attaching a 'cleared' field to each message
+            messages which have this field are then hidden in the DOM
+        */
+
         angular.element(document).ready(function () {
             $scope.loadUserInfo();
-            $scope.getConversations();
+            $scope.getConversations(true);
             //polling the server for new users and new messages
             setInterval(function () {
                 loadUserInfo();

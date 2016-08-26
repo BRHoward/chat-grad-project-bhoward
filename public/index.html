@@ -15,30 +15,43 @@
             <input  type="submit" value="Log in as guest"></input>
         </form>
         <section ng-show="loggedIn">
-            <p>Logged in as {{currentUserData.name}}.</p>
-            <h2>List of registered users</h2>
-            <ul>
-                <li ng-repeat="user in registeredUsers">
-                    {{user.name}}
-                    <img class="avatar" ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar">
-                    <button ng-disabled="currentUserData.id===user.id" ng-click="startConversation(user.id)">Start a conversation</button>
-                </li>
-            </ul>
-        </section>
-        <section>
-            <div class="conversation-div" ng-repeat="conversation in currentConversations">
-                Conversation {{conversation.id}}
+            <div class="usersColumn">
+                <p>Logged in as {{currentUserData.name}}.</p>
+                <h2>List of registered users</h2>
                 <ul>
-                    <li ng-repeat="message in conversation.messages">
-                        {{getUserFromId(message.userid).name}} - {{message.text}} ({{message.timestamp | date:"dd/MM/yyyy 'at' h:mma"}})
+                    <li ng-repeat="user in registeredUsers">
+                        {{user.name}}
+                        <img class="avatar" ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar">
+                        <button ng-disabled="currentUserData.id===user.id" ng-click="startConversation(user.id)">Chat</button>
                     </li>
                 </ul>
-                <form ng-submit="sendMessage(conversation.id)">
-                    <input type="text" ng-model="newMessageValues[conversation.id]" placeholder = "Write message here"></input>
-                    <input type="submit" value="Send"></input>
-                </form>
+            </div>
+            <div class="conversationsColumn">
+                <div class="conversation-div" ng-repeat="conversation in currentConversations">
+                    Conversation members: 
+                    <span ng-repeat="userid in conversation.userids">{{getUserFromId(userid).name}} {{$last ? '' : ($index==conversation.userids.length-2) ? ' and ' : ', '}}</span>
+                    <ul>
+                        <li ng-repeat="message in conversation.messages">
+                            {{getUserFromId(message.userid).name}} - {{message.text}} ({{message.timestamp | date:"dd/MM/yyyy 'at' h:mma"}})
+                        </li>
+                    </ul>
+                    <form ng-submit="sendMessage(conversation.id)">
+                        <input type="text" ng-model="newMessageValues[conversation.id]" placeholder = "Write message here"></input>
+                        <input type="submit" value="Send"></input>
+                    </form>
+                </div>
+                <div>
+                    <h2>New messages</h2>
+                    <ul>
+                        <li ng-repeat="message in unseenMessages" ng-if="message.userid !== currentUserData.id">
+                            {{getUserFromId(message.userid).name}} - {{message.text}}
+                        </li>
+                    </ul>
+                </div>
             </div>
         </section>
-        <p ng-show="loggedIn">{{errorText}}<p>
-    </body>
-</html>
+        <footer>
+            <p ng-show="loggedIn">{{errorText}}<p>
+            </footer>
+        </body>
+    </html>
