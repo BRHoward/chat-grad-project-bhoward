@@ -1,9 +1,9 @@
 /*global console, _*/
 
 (function () {
-    var app = angular.module("ChatApp", []);
+    var app = angular.module("ChatApp", ['ngAnimate', 'toastr']);
 
-    app.controller("ChatController", function ($scope, $http) {
+    app.controller("ChatController", function ($scope, $http, toastr) {
         $scope.loggedIn = false;
 
         //Bindable functions
@@ -81,11 +81,15 @@
 
         function getConversations(firstLoad) {
             $http.get("/api/conversations").then(function (result) {
-                //TODO: make each new set of messages show up as a timed notification
                 //Dont show notifications the first time we load the page
                 if (!firstLoad) {
-                    $scope.unseenMessages =
-                        $scope.unseenMessages.concat(findUnseenMessages($scope.currentConversations, result.data));
+                    $scope.unseenMessages = findUnseenMessages($scope.currentConversations, result.data);
+                    $scope.unseenMessages.forEach(function (unseenMessage) {
+                        if (unseenMessage.userid !== $scope.currentUserData.id) {
+                            displayMessageNotification(unseenMessage);
+                        }
+
+                    });
                 }
                 $scope.currentConversations = result.data;
             }, function (response) {
@@ -141,6 +145,10 @@
             return newMessages;
         }
 
+        function displayMessageNotification(message) {
+            var messageFrom = getUserFromId(message.userid).name;
+            toastr.info(message.text,"Message from " + messageFrom)
+        }
         /*
             TODO: allow users to clear the conversations
             could be done through attaching a 'cleared' field to each message
