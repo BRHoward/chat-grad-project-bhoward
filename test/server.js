@@ -534,4 +534,115 @@ describe("server", function () {
             });
         });
     });
+    describe("POST /api/addUserToConversation", function (req, res) {
+        var requestUrl = baseUrl + "/api/addUserToConversation";
+        it("updates the database with a new user in the conversation", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                request.post({
+                    url: requestUrl,
+                    json: {
+                        conversationid: testConversation1.id,
+                        userid: testUser.id
+                    },
+                    jar: cookieJar
+                }, function (error, response) {
+                    assert.equal(
+                        dbCollections.conversations.findOneAndUpdate.firstCall.args[0].id,
+                        testConversation1.id);
+                    assert.equal(
+                        dbCollections.conversations.findOneAndUpdate.firstCall.args[1].$addToSet.userids,
+                        testUser.id);
+                    done();
+                });
+            });
+        });
+        it("responds with status 200 if request succeeds", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                request.post({
+                    url: requestUrl,
+                    json: {
+                        id: testConversation1.id,
+                        userid: testUser.id
+                    },
+                    jar: cookieJar
+                }, function (error, response) {
+                    assert.equal(response.statusCode, 200);
+                    done();
+                });
+            });
+        });
+    });
+    describe("POST /api/updateConversationDetails", function (req, res) {
+        var requestUrl = baseUrl + "/api/updateConversationDetails";
+        it("updates the database new conversation name", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                request.put({
+                    url: requestUrl,
+                    json: {
+                        conversationid: testConversation1.id,
+                        conversationName: "New conversation name"
+                    },
+                    jar: cookieJar
+                }, function (error, response) {
+                    assert.equal(
+                        dbCollections.conversations.findOneAndUpdate.firstCall.args[0].id,
+                        testConversation1.id);
+                    assert.equal(
+                        dbCollections.conversations.findOneAndUpdate.firstCall.args[1].$set.name,
+                        "New conversation name");
+                    done();
+                });
+            });
+        });
+        it("responds with status 200 if request succeeds", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                request.put({
+                    url: requestUrl,
+                    json: {
+                        conversationid: testConversation1.id,
+                        conversationName: "New conversation name"
+                    },
+                    jar: cookieJar
+                }, function (error, response) {
+                    assert.equal(response.statusCode, 200);
+                    done();
+                });
+            });
+        });
+    });
+    describe("POST /api/leaveConversation", function (req, res) {
+        var requestUrl = baseUrl + "/api/leaveConversation";
+        it("updates the database by removing the user", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                request.post({
+                    url: requestUrl,
+                    json: {
+                        conversationid: testConversation1.id,
+                        user: testUser.id
+                    },
+                    jar: cookieJar
+                }, function (error, response) {
+                    assert.equal(
+                        dbCollections.conversations.findOneAndUpdate.firstCall.args[0].id,
+                        testConversation1.id);
+                    done();
+                });
+            });
+        });
+        it("responds with status 200 if request succeeds", function (done) {
+            authenticateUser(testUser, testToken, function () {
+                request.post({
+                    url: requestUrl,
+                    json: {
+                        id: testConversation1.id,
+                        userid: testUser.id
+                    },
+                    jar: cookieJar
+                }, function (error, response) {
+                    assert.equal(response.statusCode, 200);
+                    done();
+                });
+            });
+        });
+    });
 });
