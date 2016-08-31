@@ -3,14 +3,18 @@
     <head>
         <meta charset="utf-8">
         <title>Chat</title>
-        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-animate.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-animate.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-aria.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-messages.min.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js"></script>
         <!-- libraries for message notifications !-->
         <script src="https://npmcdn.com/angular-toastr/dist/angular-toastr.tpls.js"></script>
-        <link rel="stylesheet" href="https://npmcdn.com/angular-toastr/dist/angular-toastr.css" />
         <script src="js/main.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+        <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
         <link href="css/main.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://npmcdn.com/angular-toastr/dist/angular-toastr.css" />
     </head>
     <body ng-controller="ChatController">
         <button ng-show="!loggedIn" ng-click="githubLogin()">Log in with github</button><br>
@@ -28,16 +32,31 @@
                     <li ng-repeat="user in registeredUsers | filter:userSearchQuery | orderBy : 'name'">
                         {{user.name}}
                         <img class="avatar" ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar">
-                        <button ng-disabled="currentUserData.id===user.id" ng-click="startConversation([user.id])">Chat</button>
+                        <button ng-disabled="currentUserData.id===user.id" ng-click="startConversation([user.id], 'New conversation')">Chat</button>
                     </li>
                 </ul>
             </div>
             <div class="conversationsColumn">
                 <div class="conversation-div" ng-repeat="conversation in currentConversations | orderBy : '-messages[messages.length-1].timestamp'">
-                    Conversation members:
+                    {{conversation.name}}<br>
                     <span ng-repeat="userid in conversation.userids">{{getUserFromId(userid).name}} {{$last ? '' : ($index==conversation.userids.length-2) ? ' and ' : ', '}}</span>
                     <button ng-click="setClearedForConversationMessages(conversation.id, true)">Clear conversation</button>
                     <button ng-click="setClearedForConversationMessages(conversation.id, false)">Show all messages</button>
+                    <md-menu>
+                    <md-button ng-click="$mdOpenMenu($event)">
+                    Add user
+                    </md-button>
+                    <md-menu-content>
+                    <md-menu-item ng-repeat="user in registeredUsers">
+                    <md-button ng-click="addUserToConversation(user.id, conversation.id)">
+                    {{user.name}}
+                    </md-button>
+                    </md-menu-item>
+                    </md-menu-content>
+                    </md-menu>
+                    <md-button ng-click="leaveConversation(conversation.id)">
+                    Leave conversation
+                    </md-button>
                     <ul>
                         <li ng-repeat="message in conversation.messages" ng-if="!message.cleared">
                             {{getUserFromId(message.userid).name}} - {{message.text}} ({{message.timestamp | date:"dd/MM/yyyy 'at' h:mma"}})

@@ -1,7 +1,7 @@
 /*global console, _*/
 
 (function () {
-    var app = angular.module("ChatApp", ["ngAnimate", "toastr"]);
+    var app = angular.module("ChatApp", ["ngAnimate", "ngMaterial", "toastr"]);
 
     app.controller("ChatController", function ($scope, $http, toastr) {
 
@@ -10,6 +10,8 @@
         $scope.githubLogin = githubLogin;
         $scope.loadUserInfo = loadUserInfo;
         $scope.startConversation = startConversation;
+        $scope.addUserToConversation = addUserToConversation;
+        $scope.leaveConversation = leaveConversation;
         $scope.refreshConversations = refreshConversations;
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
@@ -32,6 +34,8 @@
                     $scope.currentUserData = userResult.data;
                     $http.get("/api/users")
                         .then(function (result) {
+                            //TODO : only update the local list rather than replace
+                            //each time we get the data
                             $scope.registeredUsers = result.data;
                         });
                 }, function (response) {
@@ -64,13 +68,14 @@
                 });
         }
 
-        function startConversation(otherUsersIds) {
+        function startConversation(otherUsersIds, conversationName) {
             otherUsersIds.push($scope.currentUserData.id);
             $http({
                     method: "POST",
                     url: "/api/newConversation",
                     data: {
-                        userIds: otherUsersIds
+                        userIds: otherUsersIds,
+                        conversationName: conversationName
                     }
                 })
                 .then(function (response) {
@@ -78,6 +83,40 @@
                 }, function (response) {
                     $scope.errorText =
                         "Failed to start conversation : " + response.status + " - " + response.statusText;
+                });
+        }
+
+        function addUserToConversation(userid, conversationid) {
+            $http({
+                    method: "POST",
+                    url: "api/addUserToConversation",
+                    data: {
+                        userid: userid,
+                        conversationid: conversationid
+
+                    }
+                })
+                .then(function (response) {
+                    $scope.refreshConversations();
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to add user to conversation : " + response.status + " - " + response.statusText;
+                });
+        }
+
+        function leaveConversation(conversationid) {
+            $http({
+                    method: "POST",
+                    url: "api/leaveConversation",
+                    data: {
+                        conversationid: conversationid
+                    }
+                })
+                .then(function (response) {
+                    $scope.refreshConversations();
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to leave conversation : " + response.status + " - " + response.statusText;
                 });
         }
 
@@ -145,13 +184,23 @@
         */
         function updateCurrentConversations(oldConversations, newConversations) {
             var unseenMessages = [];
+            var i = 0;
             //add any new conversations to the local list
-            for (var i = 0; i < newConversations.length; i++) {
+            for (i = 0; i < newConversations.length; i++) {
                 if (!oldConversations[i] || oldConversations[i].id !== newConversations[i].id) {
                     oldConversations.splice(i, 0, newConversations[i]);
                 } else {
-                    //if conversation already exists on client side then add the new messages
+                    //if conversation already exists on client side then add any new users and messages
+                    updateMembers(oldConversations[i], newConversations[i]);
                     updateMessages(oldConversations[i], newConversations[i]);
+                }
+            }
+
+            //remove any conversation which we are no longer a part of
+            for (i = 0; i < oldConversations.length; i++) {
+                if (!newConversations[i] || newConversations[i].id !== newConversations[i].id) {
+                    oldConversations.splice(i, 1);
+                    i--;
                 }
             }
             //taking this out as a seperate function to avoid too many nested statements
@@ -161,6 +210,12 @@
                         oldConvo.messages.splice(j, 0, newConvo.messages[j]);
                         unseenMessages.push(newConvo.messages[j]);
                     }
+                }
+            }
+
+            function updateMembers(oldConvo, newConvo) {
+                if (!_.isEqual(oldConvo.userids, newConvo.userids)) {
+                    oldConvo.userids = newConvo.userids;
                 }
             }
             return unseenMessages;

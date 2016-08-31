@@ -15,8 +15,9 @@ module.exports = function (port, db, githubAuthoriser) {
     var conversations = db.collection("conversations");
     var sessions = {};
 
-    function conversation(users) {
+    function conversation(users, conversationName) {
         this.id = uuid.v4();
+        this.name = conversationName;
         this.userids = users;
         this.messages = [];
     }
@@ -97,6 +98,7 @@ module.exports = function (port, db, githubAuthoriser) {
 
     app.post("/api/newConversation", function (req, res) {
         var userIds = req.body.userIds;
+        var conversationName = req.body.conversationName;
         //find all the users in the database that should be part of the new conversation
         users.find({
             id: {
@@ -108,7 +110,7 @@ module.exports = function (port, db, githubAuthoriser) {
                     var foundUsersIds = foundUsers.map(function (foundUser) {
                         return foundUser.id;
                     });
-                    var newConvo = new conversation(foundUsersIds);
+                    var newConvo = new conversation(foundUsersIds, conversationName);
                     conversations.insertOne(newConvo);
                     res.sendStatus(201);
                 } else {
@@ -120,6 +122,28 @@ module.exports = function (port, db, githubAuthoriser) {
                 res.sendStatus(500);
             }
         });
+    });
+
+    app.post("/api/addUserToConversation", function (req, res) {
+        conversations.findOneAndUpdate({
+            id: req.body.conversationid
+        }, {
+            $addToSet: {
+                userids: req.body.userid
+            }
+        });
+        res.sendStatus(200);
+    });
+
+    app.post("/api/leaveConversation", function (req, res) {
+        conversations.findOneAndUpdate({
+            id: req.body.conversationid
+        }, {
+            $pull: {
+                userids: req.session.user
+            }
+        });
+        res.sendStatus(200);
     });
 
     app.get("/api/user", function (req, res) {
@@ -175,7 +199,6 @@ module.exports = function (port, db, githubAuthoriser) {
                 res.sendStatus(500);
             }
         });
-
     });
 
     app.post("/api/newMessage", function (req, res) {
