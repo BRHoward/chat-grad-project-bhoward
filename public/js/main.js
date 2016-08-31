@@ -64,12 +64,13 @@
                 });
         }
 
-        function startConversation(otherUsersId) {
+        function startConversation(otherUsersIds) {
+            otherUsersIds.push($scope.currentUserData.id);
             $http({
                     method: "POST",
                     url: "/api/newConversation",
                     data: {
-                        userIds: [$scope.currentUserData.id, otherUsersId]
+                        userIds: otherUsersIds
                     }
                 })
                 .then(function (response) {
@@ -172,7 +173,7 @@
             setInterval(function () {
                 loadUserInfo();
                 refreshConversations();
-            }, 10000);
+            }, 1000);
         });
     });
 })();
