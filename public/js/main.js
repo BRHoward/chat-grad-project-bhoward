@@ -3,7 +3,7 @@
 (function () {
     var app = angular.module("ChatApp", ["ngAnimate", "ngMaterial", "toastr"]);
 
-    app.controller("ChatController", function ($scope, $http, toastr) {
+    app.controller("ChatController", function ($scope, $http, $mdDialog, toastr) {
 
         //Bindable functions
         $scope.guestLogin = guestLogin;
@@ -16,6 +16,7 @@
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
         $scope.setClearedForConversationMessages = setClearedForConversationMessages;
+        $scope.renameConversation = renameConversation;
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -27,6 +28,20 @@
         $scope.unseenMessages = [];
         $scope.loggedIn = false;
 
+        function renameConversation(ev, conversationid, currentName) {
+            // Appending dialog to document.body to cover sidenav in docs app
+            var confirm = $mdDialog.prompt()
+                .title("Name the conversation")
+                .initialValue(currentName)
+                .ariaLabel("Conversation name")
+                .targetEvent(ev)
+                .ok("Done")
+                .cancel("Cancel");
+            $mdDialog.show(confirm).then(function (newName) {
+                updateConversationDetails(conversationid, newName);
+            });
+        }
+
         function loadUserInfo() {
             $http.get("/api/user")
                 .then(function (userResult) {
@@ -36,7 +51,8 @@
                         .then(function (result) {
                             //TODO : only update the local list rather than replace
                             //each time we get the data
-                            $scope.registeredUsers = result.data;
+                            updateRegisteredUsers($scope.registeredUsers, result.data);
+                            //$scope.registeredUsers = result.data;
                         });
                 }, function (response) {
                     $scope.errorText =
@@ -120,6 +136,23 @@
                 });
         }
 
+        function updateConversationDetails(convId, newName) {
+            $http({
+                    method: "PUT",
+                    url: "api/updateConversationDetails",
+                    data: {
+                        conversationid: convId,
+                        conversationName: newName
+                    }
+                })
+                .then(function (response) {
+                    $scope.refreshConversations();
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to rename conversation : " + response.status + " - " + response.statusText;
+                });
+        }
+
         function refreshConversations(firstLoad) {
             $http.get("/api/conversations").then(function (result) {
                 $scope.unseenMessages = updateCurrentConversations($scope.currentConversations, result.data);
@@ -190,9 +223,10 @@
                 if (!oldConversations[i] || oldConversations[i].id !== newConversations[i].id) {
                     oldConversations.splice(i, 0, newConversations[i]);
                 } else {
-                    //if conversation already exists on client side then add any new users and messages
+                    //if conversation already exists on client side the update the conversations details
                     updateMembers(oldConversations[i], newConversations[i]);
                     updateMessages(oldConversations[i], newConversations[i]);
+                    oldConversations[i].name = newConversations[i].name;
                 }
             }
 
@@ -219,6 +253,14 @@
                 }
             }
             return unseenMessages;
+        }
+
+        function updateRegisteredUsers(oldUsers, newUsers) {
+            for (var i = 0; i < newUsers.length; i++) {
+                if (!oldUsers[i] || oldUsers[i].id !== oldUsers[i].id) {
+                    oldUsers.splice(i, 0, newUsers[i]);
+                }
+            }
         }
 
         angular.element(document).ready(function () {

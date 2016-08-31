@@ -57,6 +57,9 @@
                     <md-button ng-click="leaveConversation(conversation.id)">
                     Leave conversation
                     </md-button>
+                    <md-button ng-click="renameConversation($event, conversation.id, conversation.name)">
+                    Rename conversation
+                    </md-button>
                     <ul>
                         <li ng-repeat="message in conversation.messages" ng-if="!message.cleared">
                             {{getUserFromId(message.userid).name}} - {{message.text}} ({{message.timestamp | date:"dd/MM/yyyy 'at' h:mma"}})

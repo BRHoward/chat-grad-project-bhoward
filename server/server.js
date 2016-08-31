@@ -146,6 +146,17 @@ module.exports = function (port, db, githubAuthoriser) {
         res.sendStatus(200);
     });
 
+    app.put("/api/updateConversationDetails", function (req, res) {
+        conversations.findOneAndUpdate({
+            id: req.body.conversationid
+        }, {
+            $set: {
+                name: req.body.conversationName
+            }
+        });
+        res.sendStatus(200);
+    });
+
     app.get("/api/user", function (req, res) {
         users.findOne({
             id: req.session.user
