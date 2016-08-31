@@ -1,7 +1,4 @@
-/*global console, _*/
-
-(function () {
-    var app = angular.module("ChatApp", ["ngAnimate", "ngMaterial", "toastr"]);
+    /* global _, app */
 
     app.controller("ChatController", function ($scope, $http, $mdDialog, toastr) {
 
@@ -29,7 +26,6 @@
         $scope.loggedIn = false;
 
         function renameConversation(ev, conversationid, currentName) {
-            // Appending dialog to document.body to cover sidenav in docs app
             var confirm = $mdDialog.prompt()
                 .title("Name the conversation")
                 .initialValue(currentName)
@@ -49,10 +45,7 @@
                     $scope.currentUserData = userResult.data;
                     $http.get("/api/users")
                         .then(function (result) {
-                            //TODO : only update the local list rather than replace
-                            //each time we get the data
                             updateRegisteredUsers($scope.registeredUsers, result.data);
-                            //$scope.registeredUsers = result.data;
                         });
                 }, function (response) {
                     $scope.errorText =
@@ -273,4 +266,3 @@
             }, 1000);
         });
     });
-})();
