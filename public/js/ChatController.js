@@ -1,19 +1,19 @@
-/*global console, _*/
+    /* global _, angular */
 
-(function () {
-    var app = angular.module("ChatApp", ["ngAnimate", "toastr"]);
-
-    app.controller("ChatController", function ($scope, $http, toastr) {
+    angular.module("ChatApp").controller("ChatController", ["$scope", "$http", "$mdDialog", "toastr", function ($scope, $http, $mdDialog, toastr) {
 
         //Bindable functions
         $scope.guestLogin = guestLogin;
         $scope.githubLogin = githubLogin;
         $scope.loadUserInfo = loadUserInfo;
         $scope.startConversation = startConversation;
+        $scope.addUserToConversation = addUserToConversation;
+        $scope.leaveConversation = leaveConversation;
         $scope.refreshConversations = refreshConversations;
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
         $scope.setClearedForConversationMessages = setClearedForConversationMessages;
+        $scope.renameConversation = renameConversation;
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -25,6 +25,19 @@
         $scope.unseenMessages = [];
         $scope.loggedIn = false;
 
+        function renameConversation(ev, conversationid, currentName) {
+            var confirm = $mdDialog.prompt()
+                .title("Name the conversation")
+                .initialValue(currentName)
+                .ariaLabel("Conversation name")
+                .targetEvent(ev)
+                .ok("Done")
+                .cancel("Cancel");
+            $mdDialog.show(confirm).then(function (newName) {
+                updateConversationDetails(conversationid, newName);
+            });
+        }
+
         function loadUserInfo() {
             $http.get("/api/user")
                 .then(function (userResult) {
@@ -32,7 +45,7 @@
                     $scope.currentUserData = userResult.data;
                     $http.get("/api/users")
                         .then(function (result) {
-                            $scope.registeredUsers = result.data;
+                            updateRegisteredUsers($scope.registeredUsers, result.data);
                         });
                 }, function (response) {
                     $scope.errorText =
@@ -64,12 +77,14 @@
                 });
         }
 
-        function startConversation(otherUsersId) {
+        function startConversation(otherUsersIds, conversationName) {
+            otherUsersIds.push($scope.currentUserData.id);
             $http({
                     method: "POST",
                     url: "/api/newConversation",
                     data: {
-                        userIds: [$scope.currentUserData.id, otherUsersId]
+                        userIds: otherUsersIds,
+                        conversationName: conversationName
                     }
                 })
                 .then(function (response) {
@@ -77,6 +92,57 @@
                 }, function (response) {
                     $scope.errorText =
                         "Failed to start conversation : " + response.status + " - " + response.statusText;
+                });
+        }
+
+        function addUserToConversation(userid, conversationid) {
+            $http({
+                    method: "POST",
+                    url: "api/addUserToConversation",
+                    data: {
+                        userid: userid,
+                        conversationid: conversationid
+
+                    }
+                })
+                .then(function (response) {
+                    $scope.refreshConversations();
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to add user to conversation : " + response.status + " - " + response.statusText;
+                });
+        }
+
+        function leaveConversation(conversationid) {
+            $http({
+                    method: "POST",
+                    url: "api/leaveConversation",
+                    data: {
+                        conversationid: conversationid
+                    }
+                })
+                .then(function (response) {
+                    $scope.refreshConversations();
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to leave conversation : " + response.status + " - " + response.statusText;
+                });
+        }
+
+        function updateConversationDetails(convId, newName) {
+            $http({
+                    method: "PUT",
+                    url: "api/updateConversationDetails",
+                    data: {
+                        conversationid: convId,
+                        conversationName: newName
+                    }
+                })
+                .then(function (response) {
+                    $scope.refreshConversations();
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to rename conversation : " + response.status + " - " + response.statusText;
                 });
         }
 
@@ -144,13 +210,24 @@
         */
         function updateCurrentConversations(oldConversations, newConversations) {
             var unseenMessages = [];
+            var i = 0;
             //add any new conversations to the local list
-            for (var i = 0; i < newConversations.length; i++) {
+            for (i = 0; i < newConversations.length; i++) {
                 if (!oldConversations[i] || oldConversations[i].id !== newConversations[i].id) {
                     oldConversations.splice(i, 0, newConversations[i]);
                 } else {
-                    //if conversation already exists on client side then add the new messages
+                    //if conversation already exists on client side the update the conversations details
+                    updateMembers(oldConversations[i], newConversations[i]);
                     updateMessages(oldConversations[i], newConversations[i]);
+                    oldConversations[i].name = newConversations[i].name;
+                }
+            }
+
+            //remove any conversation which we are no longer a part of
+            for (i = 0; i < oldConversations.length; i++) {
+                if (!newConversations[i] || newConversations[i].id !== newConversations[i].id) {
+                    oldConversations.splice(i, 1);
+                    i--;
                 }
             }
             //taking this out as a seperate function to avoid too many nested statements
@@ -162,7 +239,21 @@
                     }
                 }
             }
+
+            function updateMembers(oldConvo, newConvo) {
+                if (!_.isEqual(oldConvo.userids, newConvo.userids)) {
+                    oldConvo.userids = newConvo.userids;
+                }
+            }
             return unseenMessages;
+        }
+
+        function updateRegisteredUsers(oldUsers, newUsers) {
+            for (var i = 0; i < newUsers.length; i++) {
+                if (!oldUsers[i] || oldUsers[i].id !== oldUsers[i].id) {
+                    oldUsers.splice(i, 0, newUsers[i]);
+                }
+            }
         }
 
         angular.element(document).ready(function () {
@@ -172,7 +263,6 @@
             setInterval(function () {
                 loadUserInfo();
                 refreshConversations();
-            }, 10000);
+            }, 1000);
         });
-    });
-})();
+    }]);
