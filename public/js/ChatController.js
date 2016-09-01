@@ -1,6 +1,6 @@
     /* global _, angular */
 
-    angular.module("ChatApp").controller("ChatController", ["$scope", "$http", "$mdDialog", "toastr", function ($scope, $http, $mdDialog, toastr) {
+    angular.module("ChatApp").controller("ChatController", ["$scope", "$http", "$mdDialog", "RequestService", "toastr", function ($scope, $http, $mdDialog, RequestService, toastr) {
 
         //Bindable functions
         $scope.guestLogin = guestLogin;
@@ -25,25 +25,12 @@
         $scope.unseenMessages = [];
         $scope.loggedIn = false;
 
-        function renameConversation(ev, conversationid, currentName) {
-            var confirm = $mdDialog.prompt()
-                .title("Name the conversation")
-                .initialValue(currentName)
-                .ariaLabel("Conversation name")
-                .targetEvent(ev)
-                .ok("Done")
-                .cancel("Cancel");
-            $mdDialog.show(confirm).then(function (newName) {
-                updateConversationDetails(conversationid, newName);
-            });
-        }
-
         function loadUserInfo() {
-            $http.get("/api/user")
+            RequestService.get_userInfo()
                 .then(function (userResult) {
                     $scope.loggedIn = true;
                     $scope.currentUserData = userResult.data;
-                    $http.get("/api/users")
+                    RequestService.get_registeredUsers()
                         .then(function (result) {
                             updateRegisteredUsers($scope.registeredUsers, result.data);
                         });
@@ -54,20 +41,33 @@
         }
 
         function githubLogin() {
-            $http.get("/api/oauth/uri").then(function (result) {
-                //user is sent to github login system
-                window.location.href = result.data.uri;
-            });
+            RequestService.get_githubLoginPath()
+                .then(function (result) {
+                    //user is sent to github login system
+                    window.location.href = result.data.uri;
+                });
+        }
+
+        function refreshConversations(firstLoad) {
+            RequestService.get_conversations()
+                .then(function (result) {
+                    $scope.unseenMessages = updateCurrentConversations($scope.currentConversations, result.data);
+                    if (!firstLoad) {
+                        $scope.unseenMessages.forEach(function (unseenMessage) {
+                            if (unseenMessage.userid !== $scope.currentUserData.id) {
+                                displayMessageNotification(unseenMessage);
+                            }
+
+                        });
+                    }
+                }, function (response) {
+                    $scope.errorText =
+                        "Failed to fetch conversations : " + response.status + " - " + response.statusText;
+                });
         }
 
         function guestLogin() {
-            $http({
-                    method: "POST",
-                    url: "/api/newGuest",
-                    data: {
-                        name: $scope.nameInputBox
-                    }
-                })
+            RequestService.post_guestLogin($scope.nameInputBox)
                 .then(function (response) {
                     $scope.loadUserInfo();
                     $scope.errorText = "";
@@ -79,14 +79,7 @@
 
         function startConversation(otherUsersIds, conversationName) {
             otherUsersIds.push($scope.currentUserData.id);
-            $http({
-                    method: "POST",
-                    url: "/api/newConversation",
-                    data: {
-                        userIds: otherUsersIds,
-                        conversationName: conversationName
-                    }
-                })
+            RequestService.post_startConversation(otherUsersIds, conversationName)
                 .then(function (response) {
                     $scope.refreshConversations();
                 }, function (response) {
@@ -96,15 +89,7 @@
         }
 
         function addUserToConversation(userid, conversationid) {
-            $http({
-                    method: "POST",
-                    url: "api/addUserToConversation",
-                    data: {
-                        userid: userid,
-                        conversationid: conversationid
-
-                    }
-                })
+            RequestService.post_addUserToConversation(userid, conversationid)
                 .then(function (response) {
                     $scope.refreshConversations();
                 }, function (response) {
@@ -114,13 +99,7 @@
         }
 
         function leaveConversation(conversationid) {
-            $http({
-                    method: "POST",
-                    url: "api/leaveConversation",
-                    data: {
-                        conversationid: conversationid
-                    }
-                })
+            RequestService.post_leaveConversation(conversationid)
                 .then(function (response) {
                     $scope.refreshConversations();
                 }, function (response) {
@@ -130,14 +109,7 @@
         }
 
         function updateConversationDetails(convId, newName) {
-            $http({
-                    method: "PUT",
-                    url: "api/updateConversationDetails",
-                    data: {
-                        conversationid: convId,
-                        conversationName: newName
-                    }
-                })
+            RequestService.put_updateConversationDetails(convId, newName)
                 .then(function (response) {
                     $scope.refreshConversations();
                 }, function (response) {
@@ -146,32 +118,8 @@
                 });
         }
 
-        function refreshConversations(firstLoad) {
-            $http.get("/api/conversations").then(function (result) {
-                $scope.unseenMessages = updateCurrentConversations($scope.currentConversations, result.data);
-                if (!firstLoad) {
-                    $scope.unseenMessages.forEach(function (unseenMessage) {
-                        if (unseenMessage.userid !== $scope.currentUserData.id) {
-                            displayMessageNotification(unseenMessage);
-                        }
-
-                    });
-                }
-            }, function (response) {
-                $scope.errorText =
-                    "Failed to fetch conversations : " + response.status + " - " + response.statusText;
-            });
-        }
-
         function sendMessage(conversationId) {
-            $http({
-                    method: "POST",
-                    url: "/api/newMessage",
-                    data: {
-                        conversationId: conversationId,
-                        messageText: $scope.newMessageValues[conversationId]
-                    }
-                })
+            RequestService.post_sendMessage(conversationId, $scope.newMessageValues[conversationId])
                 .then(function (response) {
                     $scope.newMessageValues[conversationId] = "";
                     $scope.refreshConversations();
@@ -247,6 +195,20 @@
             }
             return unseenMessages;
         }
+
+        function renameConversation(ev, conversationid, currentName) {
+            var confirm = $mdDialog.prompt()
+                .title("Name the conversation")
+                .initialValue(currentName)
+                .ariaLabel("Conversation name")
+                .targetEvent(ev)
+                .ok("Done")
+                .cancel("Cancel");
+            $mdDialog.show(confirm).then(function (newName) {
+                updateConversationDetails(conversationid, newName);
+            });
+        }
+
 
         function updateRegisteredUsers(oldUsers, newUsers) {
             for (var i = 0; i < newUsers.length; i++) {
