@@ -2,34 +2,34 @@ angular.module("ChatApp").service("RequestService", ["$http", function ($http) {
 
 	var self = this;
 
-	self.get_userInfo = get_userInfo;
-	self.get_registeredUsers = get_registeredUsers;
-	self.get_conversations = get_conversations;
-	self.get_githubLoginPath = get_githubLoginPath;
-	self.post_guestLogin = post_guestLogin;
-	self.post_startConversation = post_startConversation;
-	self.post_leaveConversation = post_leaveConversation;
-	self.post_sendMessage = post_sendMessage;
-	self.post_addUserToConversation = post_addUserToConversation;
-	self.put_updateConversationDetails = put_updateConversationDetails;
+	self.getUserInfo = getUserInfo;
+	self.getRegisteredUsers = getRegisteredUsers;
+	self.getConversations = getConversations;
+	self.getGithubLoginPath = getGithubLoginPath;
+	self.postGuestLogin = postGuestLogin;
+	self.postStartConversation = postStartConversation;
+	self.postLeaveConversation = postLeaveConversation;
+	self.postSendMessage = postSendMessage;
+	self.postAddUserToConversation = postAddUserToConversation;
+	self.putUpdateConversationDetails = putUpdateConversationDetails;
 
-	function get_userInfo() {
+	function getUserInfo() {
 		return $http.get("api/user");
 	}
 
-	function get_registeredUsers() {
+	function getRegisteredUsers() {
 		return $http.get("api/users");
 	}
 
-	function get_githubLoginPath() {
+	function getGithubLoginPath() {
 		return $http.get("/api/oauth/uri");
 	}
 
-	function get_conversations() {
+	function getConversations() {
 		return $http.get("api/conversations");
 	}
 
-	function post_guestLogin(guestName) {
+	function postGuestLogin(guestName) {
 		return $http({
 			method: "POST",
 			url: "/api/newGuest",
@@ -39,7 +39,7 @@ angular.module("ChatApp").service("RequestService", ["$http", function ($http) {
 		});
 	}
 
-	function post_startConversation(userIds, conversationName) {
+	function postStartConversation(userIds, conversationName) {
 		return $http({
 			method: "POST",
 			url: "/api/newConversation",
@@ -50,7 +50,7 @@ angular.module("ChatApp").service("RequestService", ["$http", function ($http) {
 		});
 	}
 
-	function post_addUserToConversation(userid, conversationid) {
+	function postAddUserToConversation(userid, conversationid) {
 		return $http({
 			method: "POST",
 			url: "api/addUserToConversation",
@@ -62,7 +62,7 @@ angular.module("ChatApp").service("RequestService", ["$http", function ($http) {
 		});
 	}
 
-	function post_leaveConversation(conversationid) {
+	function postLeaveConversation(conversationid) {
 		return $http({
 			method: "POST",
 			url: "api/leaveConversation",
@@ -72,7 +72,7 @@ angular.module("ChatApp").service("RequestService", ["$http", function ($http) {
 		});
 	}
 
-	function post_sendMessage(conversationid, messageText) {
+	function postSendMessage(conversationid, messageText) {
 		return $http({
 			method: "POST",
 			url: "/api/newMessage",
@@ -83,7 +83,7 @@ angular.module("ChatApp").service("RequestService", ["$http", function ($http) {
 		});
 	}
 
-	function put_updateConversationDetails(conversationid, conversationName) {
+	function putUpdateConversationDetails(conversationid, conversationName) {
 		return $http({
 			method: "PUT",
 			url: "api/updateConversationDetails",

@@ -26,7 +26,7 @@
         $scope.loggedIn = false;
 
         function loadUserInfo() {
-            RequestService.get_userInfo()
+            RequestService.getUserInfo()
                 .then(function (userResult) {
                     $scope.loggedIn = true;
                     $scope.currentUserData = userResult.data;
@@ -41,7 +41,7 @@
         }
 
         function githubLogin() {
-            RequestService.get_githubLoginPath()
+            RequestService.getGithubLoginPath()
                 .then(function (result) {
                     //user is sent to github login system
                     window.location.href = result.data.uri;
@@ -49,7 +49,7 @@
         }
 
         function refreshConversations(firstLoad) {
-            RequestService.get_conversations()
+            RequestService.getConversations()
                 .then(function (result) {
                     $scope.unseenMessages = updateCurrentConversations($scope.currentConversations, result.data);
                     if (!firstLoad) {
@@ -67,7 +67,7 @@
         }
 
         function guestLogin() {
-            RequestService.post_guestLogin($scope.nameInputBox)
+            RequestService.postGuestLogin($scope.nameInputBox)
                 .then(function (response) {
                     $scope.loadUserInfo();
                     $scope.errorText = "";
@@ -79,7 +79,7 @@
 
         function startConversation(otherUsersIds, conversationName) {
             otherUsersIds.push($scope.currentUserData.id);
-            RequestService.post_startConversation(otherUsersIds, conversationName)
+            RequestService.postStartConversation(otherUsersIds, conversationName)
                 .then(function (response) {
                     $scope.refreshConversations();
                 }, function (response) {
@@ -89,7 +89,7 @@
         }
 
         function addUserToConversation(userid, conversationid) {
-            RequestService.post_addUserToConversation(userid, conversationid)
+            RequestService.postAddUserToConversation(userid, conversationid)
                 .then(function (response) {
                     $scope.refreshConversations();
                 }, function (response) {
@@ -99,7 +99,7 @@
         }
 
         function leaveConversation(conversationid) {
-            RequestService.post_leaveConversation(conversationid)
+            RequestService.postLeaveConversation(conversationid)
                 .then(function (response) {
                     $scope.refreshConversations();
                 }, function (response) {
@@ -109,7 +109,7 @@
         }
 
         function updateConversationDetails(convId, newName) {
-            RequestService.put_updateConversationDetails(convId, newName)
+            RequestService.putUpdateConversationDetails(convId, newName)
                 .then(function (response) {
                     $scope.refreshConversations();
                 }, function (response) {
@@ -119,7 +119,7 @@
         }
 
         function sendMessage(conversationId) {
-            RequestService.post_sendMessage(conversationId, $scope.newMessageValues[conversationId])
+            RequestService.postSendMessage(conversationId, $scope.newMessageValues[conversationId])
                 .then(function (response) {
                     $scope.newMessageValues[conversationId] = "";
                     $scope.refreshConversations();
