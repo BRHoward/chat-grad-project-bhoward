@@ -30,7 +30,7 @@
                 .then(function (userResult) {
                     $scope.loggedIn = true;
                     $scope.currentUserData = userResult.data;
-                    RequestService.get_registeredUsers()
+                    RequestService.getRegisteredUsers()
                         .then(function (result) {
                             updateRegisteredUsers($scope.registeredUsers, result.data);
                         });
@@ -57,7 +57,6 @@
                             if (unseenMessage.userid !== $scope.currentUserData.id) {
                                 displayMessageNotification(unseenMessage);
                             }
-
                         });
                     }
                 }, function (response) {
