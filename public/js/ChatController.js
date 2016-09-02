@@ -1,6 +1,6 @@
     /* global _, angular */
 
-    angular.module("ChatApp").controller("ChatController", ["$scope", "$http", "$mdDialog", "RequestService", "toastr", function ($scope, $http, $mdDialog, RequestService, toastr) {
+    angular.module("ChatApp").controller("ChatController", ["$scope", "$http", "RequestService", "ConversationService", "toastr", function ($scope, $http, RequestService, ConversationService, toastr) {
 
         //Bindable functions
         $scope.guestLogin = guestLogin;
@@ -12,7 +12,7 @@
         $scope.refreshConversations = refreshConversations;
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
-        $scope.setClearedForConversationMessages = setClearedForConversationMessages;
+        $scope.setClearedForConversationMessages = ConversationService.setClearedForConversationMessages;
         $scope.renameConversation = renameConversation;
 
         //Bindable variables
@@ -51,7 +51,7 @@
         function refreshConversations(firstLoad) {
             RequestService.getConversations()
                 .then(function (result) {
-                    $scope.unseenMessages = updateCurrentConversations($scope.currentConversations, result.data);
+                    $scope.unseenMessages = ConversationService.updateCurrentConversations($scope.currentConversations, result.data);
                     if (!firstLoad) {
                         $scope.unseenMessages.forEach(function (unseenMessage) {
                             if (unseenMessage.userid !== $scope.currentUserData.id) {
@@ -139,73 +139,11 @@
             toastr.info(message.text, "Message from " + messageFrom);
         }
 
-        function setClearedForConversationMessages(conversationId, cleared) {
-            $scope.currentConversations.forEach(function (conversation) {
-                if (conversation.id === conversationId) {
-                    conversation.messages.forEach(function (message) {
-                        message.cleared = cleared;
-                    });
-                }
-            });
-        }
-
-        /*
-        Rather than replace the whole conversation list each fetch, this function
-        just updates the local list with new messages. This helps remove flicker, allows
-        certain angular animations and lets client retain the 'cleared' field for messages.
-        This also returns a list of all the new messages, used for notifications.
-        */
-        function updateCurrentConversations(oldConversations, newConversations) {
-            var unseenMessages = [];
-            var i = 0;
-            //add any new conversations to the local list
-            for (i = 0; i < newConversations.length; i++) {
-                if (!oldConversations[i] || oldConversations[i].id !== newConversations[i].id) {
-                    oldConversations.splice(i, 0, newConversations[i]);
-                } else {
-                    //if conversation already exists on client side the update the conversations details
-                    updateMembers(oldConversations[i], newConversations[i]);
-                    updateMessages(oldConversations[i], newConversations[i]);
-                    oldConversations[i].name = newConversations[i].name;
-                }
-            }
-
-            //remove any conversation which we are no longer a part of
-            for (i = 0; i < oldConversations.length; i++) {
-                if (!newConversations[i] || newConversations[i].id !== newConversations[i].id) {
-                    oldConversations.splice(i, 1);
-                    i--;
-                }
-            }
-            //taking this out as a seperate function to avoid too many nested statements
-            function updateMessages(oldConvo, newConvo) {
-                for (var j = 0; j < newConvo.messages.length; j++) {
-                    if (!oldConvo.messages[j] || oldConvo.messages[j].id !== newConvo.messages[j].id) {
-                        oldConvo.messages.splice(j, 0, newConvo.messages[j]);
-                        unseenMessages.push(newConvo.messages[j]);
-                    }
-                }
-            }
-
-            function updateMembers(oldConvo, newConvo) {
-                if (!_.isEqual(oldConvo.userids, newConvo.userids)) {
-                    oldConvo.userids = newConvo.userids;
-                }
-            }
-            return unseenMessages;
-        }
-
         function renameConversation(ev, conversationid, currentName) {
-            var confirm = $mdDialog.prompt()
-                .title("Name the conversation")
-                .initialValue(currentName)
-                .ariaLabel("Conversation name")
-                .targetEvent(ev)
-                .ok("Done")
-                .cancel("Cancel");
-            $mdDialog.show(confirm).then(function (newName) {
-                updateConversationDetails(conversationid, newName);
-            });
+            ConversationService.showRenameConversationDialog(ev, currentName)
+                .then(function (newName) {
+                    updateConversationDetails(conversationid, newName);
+                });
         }
 
 
