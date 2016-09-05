@@ -67,14 +67,16 @@
         }
 
         function guestLogin() {
-            RequestService.postGuestLogin($scope.nameInputBox)
-                .then(function (response) {
-                    $scope.loadUserInfo();
-                    $scope.errorText = "";
-                }, function (response) {
-                    $scope.errorText =
-                        "Failed to login as guest : " + response.status + " - " + response.statusText;
-                });
+            if ($scope.nameInputBox !== "") {
+                RequestService.postGuestLogin($scope.nameInputBox)
+                    .then(function (response) {
+                        $scope.loadUserInfo();
+                        $scope.errorText = "";
+                    }, function (response) {
+                        $scope.errorText =
+                            "Failed to login as guest : " + response.status + " - " + response.statusText;
+                    });
+            }
         }
 
         function startConversation(otherUsersIds, conversationName) {
@@ -158,20 +160,20 @@
             if (convo.name !== "") {
                 return convo.name;
             }
-            if($scope.registeredUsers.length === 0){
+            if ($scope.registeredUsers.length === 0) {
                 return "Loading...";
             }
             var otherUsersIds = convo.userids.filter(function (id) {
                 return $scope.currentUserData.id !== id;
             });
-            if(otherUsersIds.length === 0){
+            if (otherUsersIds.length === 0) {
                 return "Just you";
             }
             var outputString = "";
             outputString += getUserFromId(otherUsersIds[0]).name;
             if (otherUsersIds.length > 1) {
                 outputString += " and ";
-                outputString += otherUsersIds.length -1;
+                outputString += otherUsersIds.length - 1;
                 outputString += " other";
             }
             if (otherUsersIds.length > 2) {
