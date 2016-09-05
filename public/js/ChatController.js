@@ -157,6 +157,9 @@
         }
 
         function getConversationLabel(conversationid) {
+            //generates the string to be shown on the conversation tabs
+            //either shows the conversation name or gives an indication of
+            //how many people are in the conversation
             var convo = getConversationFromId(conversationid);
             if (convo.name !== "") {
                 return convo.name;
