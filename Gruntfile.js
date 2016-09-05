@@ -31,11 +31,11 @@ module.exports = function (grunt) {
                         loader: "style-loader!css-loader"
                     }]
                 },
-                plugins: [
-                    new webpack.optimize.UglifyJsPlugin({
-                        minimize: true
-                    })
-                ]
+                // plugins: [
+                //     new webpack.optimize.UglifyJsPlugin({
+                //         minimize: true
+                //     })
+                // ]
             }
         },
         jscs: {

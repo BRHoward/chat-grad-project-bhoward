@@ -1,6 +1,6 @@
-    /* global _, angular */
+    /* global _, angular, console */
 
-    angular.module("ChatApp").controller("ChatController", ["$scope", "$http", "RequestService", "ConversationService", "toastr", function ($scope, $http, RequestService, ConversationService, toastr) {
+    angular.module("ChatApp").controller("ChatController", ["$scope", "$http", "$mdDialog", "RequestService", "ConversationService", "toastr", function ($scope, $http, $mdDialog, RequestService, ConversationService, toastr) {
 
         //Bindable functions
         $scope.guestLogin = guestLogin;
@@ -14,6 +14,7 @@
         $scope.getUserFromId = getUserFromId;
         $scope.setClearedForConversationMessages = ConversationService.setClearedForConversationMessages;
         $scope.renameConversation = renameConversation;
+        $scope.getConversationLabel = getConversationLabel;
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -134,6 +135,12 @@
             });
         }
 
+        function getConversationFromId(id) {
+            return _.find($scope.currentConversations, function (conversation) {
+                return conversation.id === id;
+            });
+        }
+
         function displayMessageNotification(message) {
             var messageFrom = getUserFromId(message.userid).name;
             toastr.info(message.text, "Message from " + messageFrom);
@@ -146,6 +153,32 @@
                 });
         }
 
+        function getConversationLabel(conversationid) {
+            var convo = getConversationFromId(conversationid);
+            if (convo.name !== "") {
+                return convo.name;
+            }
+            if($scope.registeredUsers.length === 0){
+                return "Loading...";
+            }
+            var otherUsersIds = convo.userids.filter(function (id) {
+                return $scope.currentUserData.id !== id;
+            });
+            if(otherUsersIds.length === 0){
+                return "Just you";
+            }
+            var outputString = "";
+            outputString += getUserFromId(otherUsersIds[0]).name;
+            if (otherUsersIds.length > 1) {
+                outputString += " and ";
+                outputString += otherUsersIds.length -1;
+                outputString += " other";
+            }
+            if (otherUsersIds.length > 2) {
+                outputString += "s";
+            }
+            return outputString;
+        }
 
         function updateRegisteredUsers(oldUsers, newUsers) {
             for (var i = 0; i < newUsers.length; i++) {
