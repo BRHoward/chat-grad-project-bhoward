@@ -29,12 +29,13 @@ angular.module("ChatApp").service("RequestService", ["$http", function ($http) {
 		return $http.get("api/conversations");
 	}
 
-	function postGuestLogin(guestName) {
+	function postGuestLogin(guestName, avatarUrl) {
 		return $http({
 			method: "POST",
 			url: "/api/newGuest",
 			data: {
-				name: guestName
+				name: guestName,
+				avatarUrl: avatarUrl
 			}
 		});
 	}

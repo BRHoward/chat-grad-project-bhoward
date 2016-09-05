@@ -25,14 +25,22 @@
                 <md-button class="md-raised md-primary" ng-click="githubLogin()">Log in with github
                 </md-button><br>
                 <h2 class="md-display-1">or</h2>
-                <form ng-show="!loggedIn" ng-submit="guestLogin()">
-                    <div layout="column">
-                        <md-input-container>
-                            <input type="text" ng-model="nameInputBox" placeholder="Username"></input>
-                        </md-input-container>
-                        <md-button  class="md-raised md-primary" type="submit">Login as guest
-                        </md-button>
-                    </div>
+                <form ng-show="!loggedIn" ng-submit="guestLogin()" layout="column" layout-align="center center">
+                    <md-list>
+                        <md-list-item class="md-2-line">
+                            <img class="md-avatar" ng-src="{{avatarUrlInputBox}}">
+                            <div class="md-list-item-text" layout="column">
+                                <md-input-container>
+                                    <input type="text" ng-model="nameInputBox" placeholder="Username"></input>
+                                </md-input-container>
+                                <md-input-container>
+                                    <input type="text" ng-model="avatarUrlInputBox" placeholder="Avatar URL">
+                                </md-input-container>
+                            </div>
+                        </md-list-item>
+                    </md-list>
+                    <md-button  class="md-raised md-primary" type="submit">Login as guest
+                    </md-button>
                 </form>
             </div>
         </section>

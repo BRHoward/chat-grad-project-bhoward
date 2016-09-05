@@ -3,5 +3,5 @@ angular.module("ChatApp").config(["$mdThemingProvider", function ($mdThemingProv
 	$mdThemingProvider.theme("default")
 		.primaryPalette("indigo")
 		.accentPalette("deep-orange")
-		.backgroundPalette("grey")
+		.backgroundPalette("grey");
 }]);

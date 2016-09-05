@@ -21,6 +21,7 @@
         $scope.currentUserData = {};
         $scope.registeredUsers = [];
         $scope.nameInputBox = "";
+        $scope.avatarUrlInputBox = "http://s.mtgprice.com/images/unknown.png";
         $scope.currentConversations = [];
         $scope.errorText = "";
         $scope.unseenMessages = [];
@@ -68,7 +69,7 @@
 
         function guestLogin() {
             if ($scope.nameInputBox !== "") {
-                RequestService.postGuestLogin($scope.nameInputBox)
+                RequestService.postGuestLogin($scope.nameInputBox, $scope.avatarUrlInputBox)
                     .then(function (response) {
                         $scope.loadUserInfo();
                         $scope.errorText = "";
