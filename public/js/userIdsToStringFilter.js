@@ -20,12 +20,12 @@ angular.module("ChatApp").filter("userIdsToString", function () {
 		}
 
 		if (userids.length === 1) {
-			return getUserFromId(userids[0]).name
+			return getUserFromId(userids[0]).name;
 		}
 
 		if (shortened) {
 			var outputString = getUserFromId(userids[0]).name;
-			outputString += " and "
+			outputString += " and ";
 			outputString += userids.length - 1;
 			outputString += " other";
 			if (userids.length > 2) {
