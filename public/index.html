@@ -19,7 +19,7 @@
         <script src="js/bundle.js"></script>
     </head>
     <body ng-controller="ChatController">
-        <ng-include ng-if="!loggedIn" src="'templates/loginPage.html'"></ng-include>
+        <ng-include ng-show="!loggedIn" src="'templates/loginPage.html'"></ng-include>
         <section ng-show="loggedIn">
             <div layout="row">
                 <div flex="20">

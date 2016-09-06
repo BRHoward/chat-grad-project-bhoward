@@ -68,7 +68,7 @@ module.exports = function (port, db, githubAuthoriser) {
         var guestID = uuid.v4();
         var avatarUrl = req.body.avatarUrl;
         //if the user didn't give an avatar url then give a default one
-        if (avatarUrl === "") {
+        if (!avatarUrl) {
             avatarUrl = "http://s.mtgprice.com/images/unknown.png";
         }
 
