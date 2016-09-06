@@ -19,140 +19,27 @@
         <script src="js/bundle.js"></script>
     </head>
     <body ng-controller="ChatController">
-        <section ng-show="!loggedIn">
-            <div layout="column" layout-padding layout-align="center center">
-                <h1 class="md-display-4">ChatApp</h1>
-                <md-button class="md-raised md-primary" ng-click="githubLogin()">Log in with github
-                </md-button><br>
-                <h2 class="md-display-1">or</h2>
-                <form ng-show="!loggedIn" ng-submit="guestLogin()" layout="column" layout-align="center center">
-                    <md-list>
-                        <md-list-item class="md-2-line">
-                            <img class="md-avatar" ng-src="{{avatarUrlInputBox}}">
-                            <div class="md-list-item-text" layout="column">
-                                <md-input-container>
-                                    <input type="text" ng-model="nameInputBox" placeholder="Username" autocomplete="off"></input>
-                                </md-input-container>
-                                <md-input-container>
-                                    <input type="text" ng-model="avatarUrlInputBox" placeholder="Avatar URL" autocomplete="off">
-                                </md-input-container>
-                            </div>
-                        </md-list-item>
-                    </md-list>
-                    <md-button  class="md-raised md-primary" type="submit">Login as guest
-                    </md-button>
-                </form>
-            </div>
-        </section>
+        <ng-include ng-if="!loggedIn" src="'templates/loginPage.html'"></ng-include>
         <section ng-show="loggedIn">
             <div layout="row">
                 <div flex="20">
-                    <div layout="column" layout-padding>
-                        <div flex="5">
-                            <h1 class="md-display-2">ChatApp</h1>
-                            <h2 class="md-title">Logged in as {{currentUserData.name}}</h2>
-                        </div>
-                        <div flex="95">
-                            <md-input-container>
-                                <label>Search users</label>
-                                <input ng-model="userSearchQuery">
-                            </md-input-container>
-                            <md-list>
-                                <md-list-item class="secondary-button-padding" ng-repeat="user in registeredUsers | filter:userSearchQuery | orderBy : 'name'">
-                                    <img class="md-avatar" ng-src="{{user.avatarUrl}}" alt="{{user.name}} avatar">
-                                    <div class="md-list-item-text">
-                                        <p class="md-subhead">{{user.name}}</p>
-                                    </div>
-                                <md-button ng-disabled="currentUserData.id===user.id" ng-click="startConversation([user.id], '')" class="md-secondary">Chat</md-button>
-                            </md-list-item>
-                        </md-list>
-                    </div>
+                    <ng-include src="'templates/sidebar.html'"></ng-include>
                 </div>
-            </div>
-            <div flex="80">
-                <md-content>
-                    <md-tabs md-dynamic-height md-border-bottom>
-                        <md-tab ng-repeat="conversation in currentConversations" label="{{getConversationLabel(conversation.id)}}">
-                            <md-content layout="column" layout-padding>
-                                <div>
-                                    <span class="md-display-1">{{getConversationLabel(conversation.id)}}</span>
-                                    <md-menu>
-                                        <md-button class="md-icon-button" aria-label="More" ng-click="$mdOpenMenu($event)">
-                                            <md-icon><i class="material-icons">expand_more</i></md-icon>
-                                        </md-button>
-                                        <md-menu-content>
-                                            <md-menu-item>
-                                                <md-button ng-click="setClearedForConversationMessages(currentConversations, conversation.id, true)">
-                                                    Clear conversation
-                                                </md-button>
-                                            </md-menu-item>
-                                            <md-menu-item>
-                                                <md-button ng-click="setClearedForConversationMessages(currentConversations, conversation.id, false)">
-                                                    Show all messages
-                                                </md-button>
-                                            </md-menu-item>
-                                            <md-menu-item>
-                                                <md-button ng-click="renameConversation($event, conversation.id, conversation.name)">
-                                                    Rename conversation
-                                                </md-button>
-                                            </md-menu-item>
-                                            <md-menu-item>
-                                                <md-button ng-click="leaveConversation(conversation.id)">
-                                                    Leave conversation
-                                                </md-button>
-                                            </md-menu-item>
-                                        </md-menu-content>
-                                    </md-menu>
-                                </div>
-                                <div class="md-title">
-                                    <span ng-repeat="userid in conversation.userids">{{getUserFromId(userid).name}} {{$last ? '' : ($index==conversation.userids.length-2) ? ' and ' : ', '}}</span>
-                                    <md-menu>
-                                        <md-button class="md-icon-button" aria-label="More" ng-click="$mdOpenMenu($event)">
-                                            <md-icon md-menu-origin><i class="material-icons">add</i></md-icon>
-                                        </md-button>
-                                        <md-menu-content width="3">
-                                            <md-menu-item ng-repeat="user in registeredUsers" ng-if="user.id !== currentUserData.id">
-                                                <md-button ng-click="addUserToConversation(user.id, conversation.id)">
-                                                    {{user.name}}
-                                                </md-button>
-                                            </md-menu-item>
-                                        </md-menu-content>
-                                    </md-menu>
-                                </div>
-                            </md-content>
-                            <md-content>
-                                <md-list flex>
-                                    <md-list-item class="md-2-line" ng-repeat="message in conversation.messages" ng-if="!message.cleared">
-                                        <img class="md-avatar" ng-src="{{getUserFromId(message.userid).avatarUrl}}" alt="{{user.name}} avatar">
-                                        <div class="md-list-item-text" layout=column>
-                                            <h3 class="md-subhead">{{getUserFromId(message.userid).name}} at {{message.timestamp | date:"h:mma"}}</h3>
-                                            <h3 class="md-subhead">{{message.text}}</h3>
-                                        </div>
-                                    </md-list-item>
-                                </md-list>
-                                <form ng-submit="sendMessage(conversation.id)">
-                                    <div layout="row" layout-padding>
-                                        <md-input-container flex="90">
-                                            <input ng-model="newMessageValues[conversation.id]" autocomplete="off" aria-label="new message input box">
-                                            </input>
-                                        </md-input-container>
-                                        <div flex="10">
-                                            <md-button class="md-icon-button" type="submit">
-                                                <i class="material-icons">send</i>
-                                            </md-button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </md-content>
+                <div flex="80">
+                    <md-content>
+                        <md-tabs md-dynamic-height md-border-bottom>
+                            <md-tab ng-repeat="conversation in currentConversations" label="{{getConversationLabel(conversation.id)}}">
+                                <ng-include src="'templates/conversation/convHead.html'"></ng-include>
+                                <ng-include src="'templates/conversation/convBody.html'"></ng-include>
+                            </md-tab>
                         </md-tab>
-                    </md-tab>
-                </md-tabs>
-            </md-content>
+                    </md-tabs>
+                </md-content>
+            </div>
         </div>
-    </div>
-</section>
-<footer>
-    <p ng-show="loggedIn">{{errorText}}<p>
-    </footer>
-</body>
+    </section>
+    <footer>
+        <p ng-show="loggedIn">{{errorText}}<p>
+        </footer>
+    </body>
 </html>
