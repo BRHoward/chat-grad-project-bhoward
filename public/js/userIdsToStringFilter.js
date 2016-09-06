@@ -3,11 +3,11 @@ angular.module("ChatApp").filter("userIdsToString", function () {
 	return function (userids, allUsers, shortened) {
 
 		/* 	
-			Takes in an array of user ids and output a string listing the users by name
+			Takes in an array of user ids and outputs a string listing the users by name
 			If shortened flag is not present output in form :
 				"USER1, USER2 and USER3"
 			if it is present then output in form :
-				"USER1 + 2 others"
+				"USER1 and 2 others"
 		*/
 
 		if (userids.length === 0) {
