@@ -68,7 +68,7 @@
         }
 
         function guestLogin(name, avatarURL) {
-            if (name !== "") {
+            if (name) {
                 RequestService.postGuestLogin(name, avatarURL)
                     .then(function (response) {
                         $scope.loadUserInfo();
@@ -161,7 +161,7 @@
             //either shows the conversation name or gives an indication of
             //how many people are in the conversation
             var convo = getConversationFromId(conversationid);
-            if (convo.name !== "") {
+            if (convo.name) {
                 return convo.name;
             } else {
                 var otherUsersIds = convo.userids.filter(function (id) {
