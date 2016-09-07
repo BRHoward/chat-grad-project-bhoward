@@ -1,6 +1,6 @@
-    /* global _, angular */
+    /* global _, angular*/
 
-    angular.module("ChatApp").controller("ChatController", ["$scope", "$http", "RequestService", "ConversationService", "toastr", function ($scope, $http, RequestService, ConversationService, toastr) {
+    angular.module("ChatApp").controller("ChatController", ["$scope", "$http", "$mdDialog", "RequestService", "ConversationService", "userIdsToStringFilter", "toastr", function ($scope, $http, $mdDialog, RequestService, ConversationService, userIdsToStringFilter, toastr) {
 
         //Bindable functions
         $scope.guestLogin = guestLogin;
@@ -14,12 +14,14 @@
         $scope.getUserFromId = getUserFromId;
         $scope.setClearedForConversationMessages = ConversationService.setClearedForConversationMessages;
         $scope.renameConversation = renameConversation;
+        $scope.getConversationLabel = getConversationLabel;
 
         //Bindable variables
         $scope.newMessageValues = {};
         $scope.currentUserData = {};
         $scope.registeredUsers = [];
         $scope.nameInputBox = "";
+        $scope.avatarUrlInputBox = "http://s.mtgprice.com/images/unknown.png";
         $scope.currentConversations = [];
         $scope.errorText = "";
         $scope.unseenMessages = [];
@@ -65,15 +67,17 @@
                 });
         }
 
-        function guestLogin() {
-            RequestService.postGuestLogin($scope.nameInputBox)
-                .then(function (response) {
-                    $scope.loadUserInfo();
-                    $scope.errorText = "";
-                }, function (response) {
-                    $scope.errorText =
-                        "Failed to login as guest : " + response.status + " - " + response.statusText;
-                });
+        function guestLogin(name, avatarURL) {
+            if (name) {
+                RequestService.postGuestLogin(name, avatarURL)
+                    .then(function (response) {
+                        $scope.loadUserInfo();
+                        $scope.errorText = "";
+                    }, function (response) {
+                        $scope.errorText =
+                            "Failed to login as guest : " + response.status + " - " + response.statusText;
+                    });
+            }
         }
 
         function startConversation(otherUsersIds, conversationName) {
@@ -134,6 +138,12 @@
             });
         }
 
+        function getConversationFromId(id) {
+            return _.find($scope.currentConversations, function (conversation) {
+                return conversation.id === id;
+            });
+        }
+
         function displayMessageNotification(message) {
             var messageFrom = getUserFromId(message.userid).name;
             toastr.info(message.text, "Message from " + messageFrom);
@@ -146,6 +156,20 @@
                 });
         }
 
+        function getConversationLabel(conversationid) {
+            //generates the string to be shown on the conversation tabs
+            //either shows the conversation name or gives an indication of
+            //how many people are in the conversation
+            var convo = getConversationFromId(conversationid);
+            if (convo.name) {
+                return convo.name;
+            } else {
+                var otherUsersIds = convo.userids.filter(function (id) {
+                    return $scope.currentUserData.id !== id;
+                });
+                return userIdsToStringFilter(otherUsersIds, $scope.registeredUsers, true);
+            }
+        }
 
         function updateRegisteredUsers(oldUsers, newUsers) {
             for (var i = 0; i < newUsers.length; i++) {

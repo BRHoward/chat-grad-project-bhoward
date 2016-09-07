@@ -66,12 +66,16 @@ module.exports = function (port, db, githubAuthoriser) {
 
     app.post("/api/newGuest", function (req, res) {
         var guestID = uuid.v4();
-        var guestName = req.body.name;
+        var avatarUrl = req.body.avatarUrl;
+        //if the user didn't give an avatar url then give a default one
+        if (!avatarUrl) {
+            avatarUrl = "http://s.mtgprice.com/images/unknown.png";
+        }
 
         users.insertOne({
             id: guestID,
-            name: guestName,
-            avatarUrl: "http://s.mtgprice.com/images/unknown.png"
+            name: req.body.name,
+            avatarUrl: avatarUrl
         });
 
         var token = guestID;
