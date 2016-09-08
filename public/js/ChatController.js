@@ -162,9 +162,9 @@
 
         function displayConversationNotification(conversation) {
             if (conversation.name) {
-                toastr.info(getConversationLabel(conversation), "Added to the conversation");
+                toastr.info(getConversationLabelFromId(conversation.id), "Added to the conversation");
             } else {
-                toastr.info(getConversationLabel(conversation), "Added to a conversation with");
+                toastr.info(getConversationLabelFromId(conversation.id), "Added to a conversation with");
             }
 
         }
