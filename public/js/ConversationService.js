@@ -5,6 +5,9 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 	this.setClearedForConversationMessages = setClearedForConversationMessages;
 	this.updateCurrentConversations = updateCurrentConversations;
 	this.showRenameConversationDialog = showRenameConversationDialog;
+	this.addToUnreadMessageCounter = addToUnreadMessageCounter;
+	this.clearUnreadMessageCounter = clearUnreadMessageCounter;
+	this.getIndexOfConversation = getIndexOfConversation;
 
 	function setClearedForConversationMessages(conversations, conversationId, cleared) {
 		conversations.forEach(function (conversation) {
@@ -15,7 +18,6 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 			}
 		});
 	}
-
 
 	/*
 	Rather than replace the whole conversation list each fetch, this function
@@ -50,7 +52,14 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 			for (var j = 0; j < newConvo.messages.length; j++) {
 				if (!oldConvo.messages[j] || oldConvo.messages[j].id !== newConvo.messages[j].id) {
 					oldConvo.messages.splice(j, 0, newConvo.messages[j]);
-					unseenMessages.push(newConvo.messages[j]);
+
+					//new object that keeps track of which conversation the 
+					//new message is going to, used for notification purposes
+					var unseenMessage =  {
+						message : newConvo.messages[j],
+						conversationId : newConvo.id
+					};
+					unseenMessages.push(unseenMessage);
 				}
 			}
 		}
@@ -63,6 +72,18 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 		return unseenMessages;
 	}
 
+	function addToUnreadMessageCounter(conversation, add) {
+		if (!conversation.unreadMessages) {
+			conversation.unreadMessages = add;
+		} else {
+			conversation.unreadMessages += add;
+		}
+	}
+
+	function clearUnreadMessageCounter(conversation) {
+		conversation.unreadMessages = 0;
+	}
+
 	function showRenameConversationDialog(event, currentName) {
 		var confirm = $mdDialog.prompt()
 			.title("Name the conversation")
@@ -72,6 +93,12 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 			.ok("Done")
 			.cancel("Cancel");
 		return $mdDialog.show(confirm);
+	}
+
+	function getIndexOfConversation(conversations, conversationId){
+		return conversations.findIndex(function (conversation){
+			return conversation.id === conversationId;
+		});
 	}
 
 }]);

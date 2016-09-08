@@ -13,8 +13,11 @@
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
         $scope.setClearedForConversationMessages = ConversationService.setClearedForConversationMessages;
+        $scope.clearUnreadMessageCounter = ConversationService.clearUnreadMessageCounter;
         $scope.renameConversation = renameConversation;
+        $scope.getConversationLabelFromId = getConversationLabelFromId;
         $scope.getConversationLabel = getConversationLabel;
+        $scope.setSelectedTab = setSelectedTab;
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -26,6 +29,11 @@
         $scope.errorText = "";
         $scope.unseenMessages = [];
         $scope.loggedIn = false;
+        $scope.currentlySelectedTab = 0;
+
+        function setSelectedTab(number){
+            $scope.currentlySelectedTab = number;
+        }
 
         function loadUserInfo() {
             RequestService.getUserInfo()
@@ -56,8 +64,12 @@
                     $scope.unseenMessages = ConversationService.updateCurrentConversations($scope.currentConversations, result.data);
                     if (!firstLoad) {
                         $scope.unseenMessages.forEach(function (unseenMessage) {
-                            if (unseenMessage.userid !== $scope.currentUserData.id) {
+                            //if the message is not from the user themselves and the user is not already looking at the conversation
+                            //then show notifications through a toast and through numbers in the conversation labels
+                            if (unseenMessage.message.userid !== $scope.currentUserData.id &&
+                                $scope.currentlySelectedTab !== ConversationService.getIndexOfConversation($scope.currentConversations, unseenMessage.conversationId)) {
                                 displayMessageNotification(unseenMessage);
+                                ConversationService.addToUnreadMessageCounter(getConversationFromId(unseenMessage.conversationId), 1);
                             }
                         });
                     }
@@ -144,9 +156,9 @@
             });
         }
 
-        function displayMessageNotification(message) {
-            var messageFrom = getUserFromId(message.userid).name;
-            toastr.info(message.text, "Message from " + messageFrom);
+        function displayMessageNotification(unreadMessage) {
+            var messageFrom = getUserFromId(unreadMessage.message.userid).name;
+            toastr.info(unreadMessage.message.text, "Message from " + messageFrom);
         }
 
         function renameConversation(ev, conversationid, currentName) {
@@ -156,19 +168,25 @@
                 });
         }
 
-        function getConversationLabel(conversationid) {
+        function getConversationLabelFromId(conversationid) {
             //generates the string to be shown on the conversation tabs
             //either shows the conversation name or gives an indication of
             //how many people are in the conversation
+            var outputString;
+
             var convo = getConversationFromId(conversationid);
             if (convo.name) {
-                return convo.name;
+                outputString = convo.name;
             } else {
                 var otherUsersIds = convo.userids.filter(function (id) {
                     return $scope.currentUserData.id !== id;
                 });
-                return userIdsToStringFilter(otherUsersIds, $scope.registeredUsers, true);
+                outputString = userIdsToStringFilter(otherUsersIds, $scope.registeredUsers, true);
             }
+            if (convo.unreadMessages) {
+                outputString += " (" + convo.unreadMessages + ")";
+            }
+            return outputString;
         }
 
         function updateRegisteredUsers(oldUsers, newUsers) {
@@ -177,6 +195,11 @@
                     oldUsers.splice(i, 0, newUsers[i]);
                 }
             }
+        }
+
+        // Used in ordering the ng-repeat of conversations tabs
+        function getConversationLabel(conversation) {
+            return getConversationLabelFromId(conversation.id);
         }
 
         angular.element(document).ready(function () {
