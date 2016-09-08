@@ -26,20 +26,23 @@
                     <ng-include src="'templates/sidebar.html'"></ng-include>
                 </div>
                 <div flex="80">
-                    <md-content>
-                        <md-tabs md-dynamic-height md-border-bottom>
-                            <md-tab ng-repeat="conversation in currentConversations" label="{{getConversationLabelFromId(conversation.id)}}" md-on-select="clearUnreadMessageCounter(conversation); setSelectedTab($index)">
-                                <ng-include src="'templates/conversation/convHead.html'"></ng-include>
-                                <ng-include src="'templates/conversation/convBody.html'"></ng-include>
-                            </md-tab>
+                    <md-tabs md-dynamic-height md-border-bottom>
+                        <md-tab ng-repeat="conversation in currentConversations" label="{{getConversationLabelFromId(conversation.id)}}" md-on-select="clearUnreadMessageCounter(conversation); setSelectedTab($index)">
+                            <div layout="column" layout-fill>
+                                <div flex>
+                                    <ng-include src="'templates/conversation/convHead.html'"></ng-include>
+                                </div>
+                                <div flex>
+                                    <ng-include src="'templates/conversation/convBody.html'"></ng-include>
+                                </div>
+                            </div>
                         </md-tab>
                     </md-tabs>
-                </md-content>
+                </div>
             </div>
-        </div>
-    </section>
-    <footer>
-        <p ng-show="loggedIn">{{errorText}}<p>
-        </footer>
-    </body>
-</html>
+        </section>
+        <footer>
+            <p ng-show="loggedIn">{{errorText}}<p>
+            </footer>
+        </body>
+    </html>
