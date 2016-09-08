@@ -21,14 +21,14 @@
     <body ng-controller="ChatController">
         <ng-include ng-show="!loggedIn" src="'templates/loginPage.html'"></ng-include>
         <section ng-show="loggedIn">
-            <div layout="row">
+            <div layout="row" layout-padding>
                 <div flex="20">
                     <ng-include src="'templates/sidebar.html'"></ng-include>
                 </div>
                 <div flex="80">
                     <md-content>
                         <md-tabs md-dynamic-height md-border-bottom>
-                            <md-tab ng-repeat="conversation in currentConversations | orderBy : getConversationLabel" label="{{getConversationLabelFromId(conversation.id)}}">
+                            <md-tab ng-repeat="conversation in currentConversations" label="{{getConversationLabelFromId(conversation.id)}}" md-on-select="clearUnreadMessageCounter(conversation); setSelectedTab($index)">
                                 <ng-include src="'templates/conversation/convHead.html'"></ng-include>
                                 <ng-include src="'templates/conversation/convBody.html'"></ng-include>
                             </md-tab>
