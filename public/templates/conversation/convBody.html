@@ -1,5 +1,5 @@
 <div layout="column">
-    <md-content flex="95" class="conversation-window">
+    <md-content flex="95" class="conversation-window" scroll-glue>
         <md-list>
             <md-list-item class="md-2-line" ng-repeat="message in conversation.messages" ng-if="!message.cleared">
                 <img class="md-avatar" ng-src="{{getUserFromId(message.userid).avatarUrl}}" alt="{{user.name}} avatar">
