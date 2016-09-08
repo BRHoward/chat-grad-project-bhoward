@@ -14,7 +14,9 @@
         $scope.getUserFromId = getUserFromId;
         $scope.setClearedForConversationMessages = ConversationService.setClearedForConversationMessages;
         $scope.renameConversation = renameConversation;
+        $scope.getConversationLabelFromId = getConversationLabelFromId;
         $scope.getConversationLabel = getConversationLabel;
+
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -156,7 +158,7 @@
                 });
         }
 
-        function getConversationLabel(conversationid) {
+        function getConversationLabelFromId(conversationid) {
             //generates the string to be shown on the conversation tabs
             //either shows the conversation name or gives an indication of
             //how many people are in the conversation
@@ -177,6 +179,11 @@
                     oldUsers.splice(i, 0, newUsers[i]);
                 }
             }
+        }
+
+        // Used in ordering the ng-repeat of conversations tabs
+        function getConversationLabel(conversation) {
+            return getConversationLabelFromId(conversation.id);
         }
 
         angular.element(document).ready(function () {
