@@ -28,7 +28,7 @@
                 <div flex="80">
                     <md-content>
                         <md-tabs md-dynamic-height md-border-bottom>
-                            <md-tab ng-repeat="conversation in currentConversations" label="{{getConversationLabel(conversation.id)}}">
+                            <md-tab ng-repeat="conversation in currentConversations | orderBy : {{getConversationLabel(conversation.id)}}" label="{{getConversationLabel(conversation.id)}}">
                                 <ng-include src="'templates/conversation/convHead.html'"></ng-include>
                                 <ng-include src="'templates/conversation/convBody.html'"></ng-include>
                             </md-tab>
