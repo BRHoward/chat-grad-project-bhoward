@@ -13,8 +13,10 @@
         $scope.sendMessage = sendMessage;
         $scope.getUserFromId = getUserFromId;
         $scope.setClearedForConversationMessages = ConversationService.setClearedForConversationMessages;
+        $scope.clearUnreadMessageCounter = ConversationService.clearUnreadMessageCounter;
         $scope.renameConversation = renameConversation;
-        $scope.getConversationLabel = getConversationLabel;
+        $scope.getConversationLabelFromId = getConversationLabelFromId;
+        $scope.setSelectedTab = setSelectedTab;
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -26,6 +28,11 @@
         $scope.errorText = "";
         $scope.unseenMessages = [];
         $scope.loggedIn = false;
+        $scope.currentlySelectedTab = 0;
+
+        function setSelectedTab(number){
+            $scope.currentlySelectedTab = number;
+        }
 
         function loadUserInfo() {
             RequestService.getUserInfo()
@@ -53,12 +60,21 @@
         function refreshConversations(firstLoad) {
             RequestService.getConversations()
                 .then(function (result) {
-                    $scope.unseenMessages = ConversationService.updateCurrentConversations($scope.currentConversations, result.data);
+                    var unseen = ConversationService.updateCurrentConversations($scope.currentConversations, result.data);
+                    $scope.unseenMessages = unseen.unseenMessages;
+                    $scope.unseenConversations = unseen.unseenConversations;
                     if (!firstLoad) {
                         $scope.unseenMessages.forEach(function (unseenMessage) {
-                            if (unseenMessage.userid !== $scope.currentUserData.id) {
+                            //if the message is not from the user themselves and the user is not already looking at the conversation
+                            //then show notifications through a toast and through numbers in the conversation labels
+                            if (unseenMessage.message.userid !== $scope.currentUserData.id &&
+                                $scope.currentlySelectedTab !== ConversationService.getIndexOfConversation($scope.currentConversations, unseenMessage.conversationId)) {
                                 displayMessageNotification(unseenMessage);
+                                ConversationService.addToUnreadMessageCounter(getConversationFromId(unseenMessage.conversationId), 1);
                             }
+                        });
+                        $scope.unseenConversations.forEach(function (unseenConversation){
+                            displayConversationNotification(unseenConversation);
                         });
                     }
                 }, function (response) {
@@ -144,9 +160,18 @@
             });
         }
 
-        function displayMessageNotification(message) {
-            var messageFrom = getUserFromId(message.userid).name;
-            toastr.info(message.text, "Message from " + messageFrom);
+        function displayConversationNotification(conversation) {
+            if (conversation.name) {
+                toastr.info(getConversationLabelFromId(conversation.id), "Added to the conversation");
+            } else {
+                toastr.info(getConversationLabelFromId(conversation.id), "Added to a conversation with");
+            }
+
+        }
+
+        function displayMessageNotification(unreadMessage) {
+            var messageFrom = getUserFromId(unreadMessage.message.userid).name;
+            toastr.info(unreadMessage.message.text, "Message from " + messageFrom);
         }
 
         function renameConversation(ev, conversationid, currentName) {
@@ -156,19 +181,25 @@
                 });
         }
 
-        function getConversationLabel(conversationid) {
+        function getConversationLabelFromId(conversationid) {
             //generates the string to be shown on the conversation tabs
             //either shows the conversation name or gives an indication of
             //how many people are in the conversation
+            var outputString;
+
             var convo = getConversationFromId(conversationid);
             if (convo.name) {
-                return convo.name;
+                outputString = convo.name;
             } else {
                 var otherUsersIds = convo.userids.filter(function (id) {
                     return $scope.currentUserData.id !== id;
                 });
-                return userIdsToStringFilter(otherUsersIds, $scope.registeredUsers, true);
+                outputString = userIdsToStringFilter(otherUsersIds, $scope.registeredUsers, true);
             }
+            if (convo.unreadMessages) {
+                outputString += " (" + convo.unreadMessages + ")";
+            }
+            return outputString;
         }
 
         function updateRegisteredUsers(oldUsers, newUsers) {

@@ -1,6 +1,6 @@
 /*global require*/
 
-angular.module("ChatApp", ["ngAnimate", "ngMaterial", "toastr"]);
+angular.module("ChatApp", ["ngAnimate", "ngMaterial", "luegg.directives", "toastr"]);
 
 require("./ChatController.js");
 require("./RequestService.js");

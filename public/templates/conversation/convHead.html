@@ -1,34 +1,34 @@
-<md-content layout="column" layout-padding>
-    <div>
-        <span class="md-display-1">{{getConversationLabel(conversation.id)}}</span>
-        <md-menu>
-            <md-button class="md-icon-button" aria-label="More" ng-click="$mdOpenMenu($event)">
-                <md-icon><i class="material-icons">expand_more</i></md-icon>
-            </md-button>
-            <md-menu-content>
-                <md-menu-item>
-                    <md-button ng-click="setClearedForConversationMessages(currentConversations, conversation.id, true)">
-                        Clear conversation
-                    </md-button>
-                </md-menu-item>
-                <md-menu-item>
-                    <md-button ng-click="setClearedForConversationMessages(currentConversations, conversation.id, false)">
-                        Show all messages
-                    </md-button>
-                </md-menu-item>
-                <md-menu-item>
-                    <md-button ng-click="renameConversation($event, conversation.id, conversation.name)">
-                        Rename conversation
-                    </md-button>
-                </md-menu-item>
-                <md-menu-item>
-                    <md-button ng-click="leaveConversation(conversation.id)">
-                        Leave conversation
-                    </md-button>
-                </md-menu-item>
-            </md-menu-content>
-        </md-menu>
-    </div>
+<div layout="row" layout-padding>
+    <span class="md-display-1">{{getConversationLabelFromId(conversation.id)}}</span>
+    <md-menu>
+        <md-button class="md-icon-button" aria-label="More" ng-click="$mdOpenMenu($event)">
+            <md-icon><i class="material-icons">more_vert</i></md-icon>
+        </md-button>
+        <md-menu-content>
+            <md-menu-item>
+                <md-button ng-click="setClearedForConversationMessages(currentConversations, conversation.id, true)">
+                    Clear conversation
+                </md-button>
+            </md-menu-item>
+            <md-menu-item>
+                <md-button ng-click="setClearedForConversationMessages(currentConversations, conversation.id, false)">
+                    Show all messages
+                </md-button>
+            </md-menu-item>
+            <md-menu-item>
+                <md-button ng-click="renameConversation($event, conversation.id, conversation.name)">
+                    Rename conversation
+                </md-button>
+            </md-menu-item>
+            <md-menu-item>
+                <md-button ng-click="leaveConversation(conversation.id)">
+                    Leave conversation
+                </md-button>
+            </md-menu-item>
+        </md-menu-content>
+    </md-menu>
+</div>
+<div layout="row" layout-padding>
     <div class="md-title">{{conversation.userids | userIdsToString: registeredUsers:false}}
         <md-menu>
             <md-button class="md-icon-button" aria-label="More" ng-click="$mdOpenMenu($event)">
@@ -43,4 +43,4 @@
             </md-menu-content>
         </md-menu>
     </div>
-</md-content>
+</div>
