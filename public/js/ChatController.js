@@ -60,7 +60,9 @@
         function refreshConversations(firstLoad) {
             RequestService.getConversations()
                 .then(function (result) {
-                    $scope.unseenMessages = ConversationService.updateCurrentConversations($scope.currentConversations, result.data);
+                    var unseen = ConversationService.updateCurrentConversations($scope.currentConversations, result.data);
+                    $scope.unseenMessages = unseen.unseenMessages;
+                    $scope.unseenConversations = unseen.unseenConversations;
                     if (!firstLoad) {
                         $scope.unseenMessages.forEach(function (unseenMessage) {
                             //if the message is not from the user themselves and the user is not already looking at the conversation
@@ -70,6 +72,9 @@
                                 displayMessageNotification(unseenMessage);
                                 ConversationService.addToUnreadMessageCounter(getConversationFromId(unseenMessage.conversationId), 1);
                             }
+                        });
+                        $scope.unseenConversations.forEach(function (unseenConversation){
+                            displayConversationNotification(unseenConversation);
                         });
                     }
                 }, function (response) {
@@ -153,6 +158,15 @@
             return _.find($scope.currentConversations, function (conversation) {
                 return conversation.id === id;
             });
+        }
+
+        function displayConversationNotification(conversation) {
+            if (conversation.name) {
+                toastr.info(getConversationLabelFromId(conversation.id), "Added to the conversation");
+            } else {
+                toastr.info(getConversationLabelFromId(conversation.id), "Added to a conversation with");
+            }
+
         }
 
         function displayMessageNotification(unreadMessage) {

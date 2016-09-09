@@ -23,41 +23,71 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 	Rather than replace the whole conversation list each fetch, this function
 	just updates the local list with new messages. This helps remove flicker, allows
 	certain angular animations and lets client retain the 'cleared' field for messages.
-	This also returns a list of all the new messages, used for notifications.
+	This also returns a list of all the new conversation and messages, used for notifications.
 	*/
 	function updateCurrentConversations(oldConversations, newConversations) {
 		var unseenMessages = [];
+		var unseenConversations = [];
 		var i = 0;
-		//add any new conversations to the local list
-		for (i = 0; i < newConversations.length; i++) {
-			if (!oldConversations[i] || oldConversations[i].id !== newConversations[i].id) {
-				oldConversations.splice(i, 0, newConversations[i]);
-			} else {
-				//if conversation already exists on client side the update the conversations details
-				updateMembers(oldConversations[i], newConversations[i]);
-				updateMessages(oldConversations[i], newConversations[i]);
-				oldConversations[i].name = newConversations[i].name;
+		var j = 0;
+
+		addNewConversations(oldConversations, newConversations);
+		removeOldConversations(oldConversations, newConversations);
+
+		function addNewConversations(oldConversations, newConversations) {
+			var conversationFound;
+			for (i = 0; i < newConversations.length; i++) {
+				conversationFound = false;
+				for (j = 0; j < oldConversations.length; j++) {
+					if (newConversations[i].id === oldConversations[j].id) {
+						updateMessages(oldConversations[j], newConversations[i]);
+						updateMembers(oldConversations[j], newConversations[i]);
+						oldConversations[i].name = newConversations[i].name;
+						conversationFound = true;
+						break;
+					}
+				}
+
+				//the current conversation was not found on the local list, add it
+				if (!conversationFound) {
+					if (!oldConversations[i]) {
+						oldConversations.push(newConversations[i]);
+					} else {
+						oldConversations.splice(i, 0, newConversations[i]);
+					}
+					unseenConversations.push(oldConversations[i]);
+				}
 			}
 		}
 
-		//remove any conversation which we are no longer a part of
-		for (i = 0; i < oldConversations.length; i++) {
-			if (!newConversations[i] || newConversations[i].id !== newConversations[i].id) {
-				oldConversations.splice(i, 1);
-				i--;
+		function removeOldConversations(oldConversations, newConversations) {
+			var conversationFound;
+			for (i = 0; i < oldConversations.length; i++) {
+				conversationFound = false;
+				for (j = 0; j < newConversations.length; j++) {
+					if (oldConversations[i].id === newConversations[j].id) {
+						conversationFound = true;
+						break;
+					}
+				}
+				//this local conversation is not a part of the new list, remove it
+				if (!conversationFound) {
+					oldConversations.splice(i, 1);
+					i--;
+				}
 			}
 		}
-		//taking this out as a seperate function to avoid too many nested statements
+
 		function updateMessages(oldConvo, newConvo) {
-			for (var j = 0; j < newConvo.messages.length; j++) {
-				if (!oldConvo.messages[j] || oldConvo.messages[j].id !== newConvo.messages[j].id) {
-					oldConvo.messages.splice(j, 0, newConvo.messages[j]);
+			for (var k = 0; k < newConvo.messages.length; k++) {
+				if (!oldConvo.messages[k] || oldConvo.messages[k].id !== newConvo.messages[k].id) {
+					oldConvo.messages.splice(k, 0, newConvo.messages[k]);
 
 					//new object that keeps track of which conversation the 
 					//new message is going to, used for notification purposes
-					var unseenMessage =  {
-						message : newConvo.messages[j],
-						conversationId : newConvo.id
+					var unseenMessage = {
+						message: newConvo.messages[k],
+						conversationId: newConvo.id
 					};
 					unseenMessages.push(unseenMessage);
 				}
@@ -69,7 +99,17 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 				oldConvo.userids = newConvo.userids;
 			}
 		}
-		return unseenMessages;
+
+		function updateName(oldConvo, newConvo) {
+			if (oldConvo.name !== newConvo.name) {
+				oldConvo.name = newConvo.name;
+			}
+		}
+
+		return {
+			unseenMessages: unseenMessages,
+			unseenConversations: unseenConversations
+		};
 	}
 
 	function addToUnreadMessageCounter(conversation, add) {
@@ -95,8 +135,8 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 		return $mdDialog.show(confirm);
 	}
 
-	function getIndexOfConversation(conversations, conversationId){
-		return conversations.findIndex(function (conversation){
+	function getIndexOfConversation(conversations, conversationId) {
+		return conversations.findIndex(function (conversation) {
 			return conversation.id === conversationId;
 		});
 	}
