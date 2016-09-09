@@ -32,7 +32,7 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 		var j = 0;
 
 		addNewConversations(oldConversations, newConversations);
-		removeOldConversation(oldConversations, newConversations);
+		removeOldConversations(oldConversations, newConversations);
 
 		function addNewConversations(oldConversations, newConversations) {
 			var conversationFound;
@@ -60,7 +60,7 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 			}
 		}
 
-		function removeOldConversation(oldConversations, newConversations) {
+		function removeOldConversations(oldConversations, newConversations) {
 			var conversationFound;
 			for (i = 0; i < oldConversations.length; i++) {
 				conversationFound = false;
