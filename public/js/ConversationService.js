@@ -31,49 +31,53 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 		var i = 0;
 		var j = 0;
 
-		var conversationFound;
-		//adding new conversations to the local list
-		for (i = 0; i < newConversations.length; i++) {
-			conversationFound = false;
-			for (j = 0; j < oldConversations.length; j++) {
-				if (newConversations[i].id === oldConversations[j].id) {
-					updateMessages(oldConversations[j], newConversations[i]);
-					updateMembers(oldConversations[j], newConversations[i]);
-					oldConversations[i].name = newConversations[i].name;
-					conversationFound = true;
-					break;
-				}
-			}
+		addNewConversations(oldConversations, newConversations);
+		removeOldConversation(oldConversations, newConversations);
 
-			//the current conversation was not found on the local list, add it
-			if (!conversationFound) {
-				if (!oldConversations[i]) {
-					oldConversations.push(newConversations[i]);
-				} else {
-					oldConversations.splice(i, 0, newConversations[i]);
+		function addNewConversations(oldConversations, newConversations) {
+			var conversationFound;
+			for (i = 0; i < newConversations.length; i++) {
+				conversationFound = false;
+				for (j = 0; j < oldConversations.length; j++) {
+					if (newConversations[i].id === oldConversations[j].id) {
+						updateMessages(oldConversations[j], newConversations[i]);
+						updateMembers(oldConversations[j], newConversations[i]);
+						oldConversations[i].name = newConversations[i].name;
+						conversationFound = true;
+						break;
+					}
 				}
-				unseenConversations.push(oldConversations[i]);
-			}
 
-		}
-
-		//removing conversations that we are no longer a part of
-		for (i = 0; i < oldConversations.length; i++) {
-			conversationFound = false;
-			for (j = 0; j < newConversations.length; j++) {
-				if (oldConversations[i].id === newConversations[j].id) {
-					conversationFound = true;
-					break;
+				//the current conversation was not found on the local list, add it
+				if (!conversationFound) {
+					if (!oldConversations[i]) {
+						oldConversations.push(newConversations[i]);
+					} else {
+						oldConversations.splice(i, 0, newConversations[i]);
+					}
+					unseenConversations.push(oldConversations[i]);
 				}
-			}
-			//this local conversation is not a part of the new list, remove it
-			if (!conversationFound) {
-				oldConversations.splice(i, 1);
-				i--;
 			}
 		}
 
-		//taking this out as a seperate function to avoid too many nested statements
+		function removeOldConversation(oldConversations, newConversations) {
+			var conversationFound;
+			for (i = 0; i < oldConversations.length; i++) {
+				conversationFound = false;
+				for (j = 0; j < newConversations.length; j++) {
+					if (oldConversations[i].id === newConversations[j].id) {
+						conversationFound = true;
+						break;
+					}
+				}
+				//this local conversation is not a part of the new list, remove it
+				if (!conversationFound) {
+					oldConversations.splice(i, 1);
+					i--;
+				}
+			}
+		}
+
 		function updateMessages(oldConvo, newConvo) {
 			for (var k = 0; k < newConvo.messages.length; k++) {
 				if (!oldConvo.messages[k] || oldConvo.messages[k].id !== newConvo.messages[k].id) {
@@ -101,6 +105,7 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 				oldConvo.name = newConvo.name;
 			}
 		}
+
 		return {
 			unseenMessages: unseenMessages,
 			unseenConversations: unseenConversations
