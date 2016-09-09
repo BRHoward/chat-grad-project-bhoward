@@ -16,7 +16,6 @@
         $scope.clearUnreadMessageCounter = ConversationService.clearUnreadMessageCounter;
         $scope.renameConversation = renameConversation;
         $scope.getConversationLabelFromId = getConversationLabelFromId;
-        $scope.getConversationLabel = getConversationLabel;
         $scope.setSelectedTab = setSelectedTab;
 
         //Bindable variables
@@ -195,11 +194,6 @@
                     oldUsers.splice(i, 0, newUsers[i]);
                 }
             }
-        }
-
-        // Used in ordering the ng-repeat of conversations tabs
-        function getConversationLabel(conversation) {
-            return getConversationLabelFromId(conversation.id);
         }
 
         angular.element(document).ready(function () {
