@@ -27,8 +27,8 @@
                     <ng-include src="'templates/sidebar.html'"></ng-include>
                 </div>
                 <div flex="80">
-                    <md-tabs md-dynamic-height md-border-bottom>
-                        <md-tab ng-repeat="conversation in currentConversations" label="{{getConversationLabelFromId(conversation.id)}}" md-on-select="clearUnreadMessageCounter(conversation); setSelectedTab($index)">
+                    <md-tabs md-dynamic-height md-border-bottom md-selected="currentlySelectedTab">
+                        <md-tab ng-repeat="conversation in currentConversations" label="{{getConversationLabelFromId(conversation.id)}}" md-on-select="clearUnreadMessageCounter(conversation);">
                             <div layout="column" layout-fill>
                                 <div flex>
                                     <ng-include src="'templates/conversation/convHead.html'"></ng-include>
