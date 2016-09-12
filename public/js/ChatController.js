@@ -16,7 +16,6 @@
         $scope.clearUnreadMessageCounter = ConversationService.clearUnreadMessageCounter;
         $scope.renameConversation = renameConversation;
         $scope.getConversationLabelFromId = getConversationLabelFromId;
-        $scope.setSelectedTab = setSelectedTab;
 
         //Bindable variables
         $scope.newMessageValues = {};
@@ -29,10 +28,6 @@
         $scope.unseenMessages = [];
         $scope.loggedIn = false;
         $scope.currentlySelectedTab = 0;
-
-        function setSelectedTab(number){
-            $scope.currentlySelectedTab = number;
-        }
 
         function loadUserInfo() {
             RequestService.getUserInfo()

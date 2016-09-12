@@ -42,7 +42,7 @@ angular.module("ChatApp").service("ConversationService", ["$mdDialog", function 
 					if (newConversations[i].id === oldConversations[j].id) {
 						updateMessages(oldConversations[j], newConversations[i]);
 						updateMembers(oldConversations[j], newConversations[i]);
-						oldConversations[i].name = newConversations[i].name;
+						oldConversations[j].name = newConversations[i].name;
 						conversationFound = true;
 						break;
 					}
